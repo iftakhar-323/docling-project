@@ -82,14 +82,32 @@ def _find_gap_columns(gray: np.ndarray) -> np.ndarray:
 
 def _trim_content_rows(gray: np.ndarray) -> tuple[int, int]:
     """Returns (y_start, y_end) of the main dark-content block inside a
-    cropped image slice. Used to trim stray title/OCR text that bleeds in
-    from above the figure."""
-    row_means = gray.mean(axis=1)
-    # Identify rows that are clearly "dark" (i.e. belong to the image proper).
-    dark = row_means < (WHITE_THRESHOLD - 60)
-    if not dark.any():
-        return 0, gray.shape[0]
-    ys = np.where(dark)[0]
+    cropped image slice. Skips thin text rows (suptitles, OCR bleed) at the
+    top by requiring rows to have a high density of dark pixels (image
+    content), not just sparse text strokes."""
+    h, w = gray.shape
+    if h == 0:
+        return 0, 0
+
+    # For each row, count dark pixels and compute "density" = dark_count / width.
+    # Real image content has high density (lots of dark pixels across the row),
+    # while a row of small text strokes has low density.
+    dark_mask = gray < (WHITE_THRESHOLD - 60)
+    row_density = dark_mask.sum(axis=1) / max(1, w)
+
+    # Density threshold: text rows have density < 0.15; image rows have >= 0.30.
+    DENSITY_THRESHOLD = 0.30
+    is_content = row_density >= DENSITY_THRESHOLD
+
+    if not is_content.any():
+        # Fall back to first/last dark row.
+        any_dark = dark_mask.any(axis=1)
+        if not any_dark.any():
+            return 0, h
+        ys = np.where(any_dark)[0]
+        return int(ys[0]), int(ys[-1]) + 1
+
+    ys = np.where(is_content)[0]
     return int(ys[0]), int(ys[-1]) + 1
 
 
@@ -166,15 +184,6 @@ def split_grid_image(image_path: Path) -> list[tuple[Path, str]]:
     If splitting isn't possible (only 1 segment found in either direction),
     returns the original image_path with an empty title wrapped in a tuple.
     """
-    """
-    Splits a combined grid image (e.g. 3 subplots side by side or stacked
-    vertically) into separate image files, if there is a clear whitespace gap
-    between the subplots.
-
-    Returns the list of split image paths (ordered by direction). If splitting
-    isn't possible (only 1 segment found in either direction), returns the
-    original image_path wrapped in a list.
-    """
     img = Image.open(image_path).convert("RGB")
     gray = np.array(img.convert("L"))
 
@@ -215,11 +224,13 @@ def split_grid_image(image_path: Path) -> list[tuple[Path, str]]:
         else:
             cropped = img.crop((0, a0, img.width, a1))
 
-        # Trim out any stray title/OCR text that bleeds into the part.
+        # Trim out any stray title/OCR text that bleeds into the part. Use a
+        # small padding so the per-subplot title stays visible, while the
+        # suptitle (which sits well above the first row of dense content) is
+        # removed.
         cropped_gray = np.array(cropped.convert("L"))
         y0, y1 = _trim_content_rows(cropped_gray)
-        # Pad a little so titles inside the subplot aren't lopped off.
-        title_pad = max(1, int(cropped.height * 0.12))
+        title_pad = max(8, int(cropped.height * 0.04))
         y0_padded = max(0, y0 - title_pad)
         if y1 - y0_padded > 20:
             cropped = cropped.crop((0, y0_padded, cropped.width, y1))
@@ -277,40 +288,56 @@ def process_images_dir(images_dir: Path) -> dict[str, list[tuple[Path, str]]]:
 
 
 # --------------------------------------------------------------------------
-# STEP 3: Update the markdown file so split images are referenced on
-#         separate lines
+# STEP 3: Update the markdown file so each image line is preceded by the
+#         image filename as a caption, and split images appear on their
+#         own lines.
 # --------------------------------------------------------------------------
+def _format_image_block(prefix: str, sp: Path, title: str, idx: int) -> list[str]:
+    """Returns 2 markdown lines: the caption (filename) and the image line."""
+    name = sp.name
+    label = title or f"Part {idx}"
+    return [
+        f"**{name}**",
+        f"![{label}]({prefix}{name})",
+    ]
+
+
 def update_markdown_with_splits(md_path: Path, split_mapping: dict[str, list[tuple[Path, str]]]) -> None:
-    """Reads the markdown file, and wherever the original combined image is
-    referenced, replaces that line with one markdown image line per split image,
-    labelled with the detected subplot title (or 'Part N')."""
-    if not split_mapping:
-        return
-
+    """For every image referenced in the markdown:
+    - If it was split into parts, replace the single line with one block per
+      part (each block = caption line + image line).
+    - Otherwise, prepend a caption line (the image filename) above the line.
+    This ensures each image has its filename visible as text above it, while
+    the image itself stays free of in-image text artefacts.
+    """
     content = md_path.read_text(encoding="utf-8")
+    new_lines: list[str] = []
 
-    new_lines = []
     for line in content.splitlines():
         replaced = False
-        for original_name, split_paths in split_mapping.items():
-            if original_name in line and line.strip().startswith("!["):
-                # Preserve whatever directory prefix was used in the original
-                # reference (e.g. "output_md/dip1_artifacts/").
+        if line.strip().startswith("!["):
+            # Find the filename in this image line.
+            inside = ""
+            if "(" in line and ")" in line:
+                inside = line.split("(", 1)[1].rsplit(")", 1)[0]
+            image_filename = inside.rsplit("/", 1)[-1] if inside else ""
+
+            if image_filename and image_filename in split_mapping:
+                # Split image: emit one block per part.
                 prefix = ""
-                if "(" in line and ")" in line:
-                    inside = line.split("(", 1)[1].rsplit(")", 1)[0]
-                    if "/" in inside:
-                        prefix = inside.rsplit("/", 1)[0] + "/"
-                for i, (sp, title) in enumerate(split_paths, start=1):
-                    label = title or f"Part {i}"
-                    new_lines.append(f"![{label}]({prefix}{sp.name})")
+                if "/" in inside:
+                    prefix = inside.rsplit("/", 1)[0] + "/"
+                for i, (sp, title) in enumerate(split_mapping[image_filename], start=1):
+                    new_lines.extend(_format_image_block(prefix, sp, title, i))
                 replaced = True
-                break
+            elif image_filename:
+                # Non-split image: prepend caption line with the filename.
+                new_lines.append(f"**{image_filename}**")
         if not replaced:
             new_lines.append(line)
 
-    md_path.write_text("\n".join(new_lines), encoding="utf-8")
-    print(f"[markdown] {md_path.name} updated with split image references")
+    md_path.write_text("\n".join(new_lines) + "\n", encoding="utf-8")
+    print(f"[markdown] {md_path.name} updated with image captions")
 
 
 def strip_code_blocks_near_images(md_path: Path) -> None:
