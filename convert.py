@@ -388,8 +388,21 @@ def split_grid_image(image_path: Path) -> list[tuple[Path, str]]:
     img = Image.open(image_path).convert("RGB")
     gray = np.array(img.convert("L"))
 
-    # Try horizontal (column) splits first.
-    col_gap_mask = _find_gap_columns(gray)
+    # A full-width header/title strip above the subplots (e.g. print() output
+    # or a suptitle) has SOME dark pixels in every column, which would make
+    # every column's mean brightness dip below WHITE_THRESHOLD and hide any
+    # real gaps between subplots. To avoid that, restrict column-gap
+    # detection to the vertical band that actually contains the dense image
+    # content (found the same way we later trim each cropped part), so
+    # header text above the subplots never suppresses split detection.
+    content_y0, content_y1 = _trim_content_rows(gray)
+    if content_y1 > content_y0:
+        content_band = gray[content_y0:content_y1, :]
+    else:
+        content_band = gray
+
+    # Try horizontal (column) splits first — using only the content band.
+    col_gap_mask = _find_gap_columns(content_band)
     col_segments = _segments_from_gap_mask(col_gap_mask)
 
     # Try vertical (row) splits as well.
@@ -408,17 +421,21 @@ def split_grid_image(image_path: Path) -> list[tuple[Path, str]]:
         # nothing worth splitting, keep the original image
         return [(image_path, "")]
 
-    # Sanity check: if any candidate segment is unreasonably narrow vs the
-    # full image, this isn't a real grid — it's a page with text columns /
-    # rows. Don't split, keep the original image intact.
-    full_extent = gray.shape[1] if horizontal else gray.shape[0]
+    # Sanity check: if any candidate segment is unreasonably narrow, this
+    # isn't a real grid — it's a page with text columns / rows. Compare each
+    # segment against the CONTENT span (from the start of the first segment
+    # to the end of the last one), not the raw full image dimension — a real
+    # grid image often has wide blank margins on the sides (common with
+    # matplotlib exports), and comparing against the full image would wrongly
+    # reject a perfectly good 3-column grid just because of that margin.
+    content_extent = segments[-1][1] - segments[0][0]
     for s, e in segments:
         seg_extent = e - s
-        if seg_extent < full_extent * MIN_SEGMENT_RATIO:
+        if seg_extent < content_extent * MIN_SEGMENT_RATIO:
             print(
                 f"[split] {image_path.name}: rejected split "
                 f"(candidate segment {seg_extent}px is < "
-                f"{int(MIN_SEGMENT_RATIO * 100)}% of full {full_extent}px — "
+                f"{int(MIN_SEGMENT_RATIO * 100)}% of content span {content_extent}px — "
                 f"likely text spacing, not a real grid gap)"
             )
             return [(image_path, "")]
