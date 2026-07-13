@@ -45,6 +45,14 @@ MIN_SEGMENT_RATIO = 0.18    # smallest segment must be >= this fraction of full 
 OCR_MIN_CONFIDENCE = 0.0    # RapidOCR score threshold below which a line is dropped
                              # (set to e.g. 0.3 if you see too much garbage text)
 
+# If the OCR-detected text covers at least this fraction of the image's total
+# area, the image is treated as a "text image" (e.g. a photographed notebook
+# page) rather than a diagram/chart. Text images are DROPPED from the
+# markdown entirely — only their extracted text is kept, so no text ever
+# lives solely inside a picture. Diagrams/charts (low text coverage) keep
+# the image AND get their text (e.g. a title) appended below as real text.
+TEXT_IMAGE_COVERAGE_THRESHOLD = 0.12
+
 
 # --------------------------------------------------------------------------
 # STEP 1: Convert documents to Markdown using Docling
@@ -196,39 +204,65 @@ def _get_ocr_engine():
     return _OCR_ENGINE or None
 
 
-def extract_full_text_from_image(image_path: Path) -> str:
-    """Runs OCR over the ENTIRE image (not just a title band) and returns the
-    recognized text as multi-line plain text, ordered top-to-bottom / left-to-
-    right the way RapidOCR naturally returns boxes (reading order).
+def _polygon_area(pts) -> float:
+    """Shoelace formula: area of a (possibly non-axis-aligned) quadrilateral
+    given as a list of (x, y) points, in pixel units."""
+    try:
+        n = len(pts)
+        if n < 3:
+            return 0.0
+        area = 0.0
+        for i in range(n):
+            x1, y1 = pts[i]
+            x2, y2 = pts[(i + 1) % n]
+            area += x1 * y2 - x2 * y1
+        return abs(area) / 2.0
+    except Exception:
+        return 0.0
 
-    Used so that handwritten/printed content inside an image (e.g. a scanned
-    notebook page) is also captured as real, searchable text in the markdown,
-    in addition to the embedded image itself.
 
-    Returns "" if OCR is unavailable or finds no text.
+def ocr_image_full(image_path: Path) -> tuple[str, float]:
+    """Runs OCR over the ENTIRE image (not just a title band) and returns
+    (extracted_text, text_coverage_ratio):
+
+    - extracted_text: recognized text as multi-line plain text, ordered
+      top-to-bottom by each detection's vertical position (reading order).
+    - text_coverage_ratio: fraction (0.0-1.0) of the image's total area that
+      is covered by detected text boxes. A photographed notebook page (mostly
+      handwriting) has a HIGH ratio; a chart/diagram with just a small title
+      has a LOW ratio. Used to decide whether to keep the image or drop it
+      and keep only the text (see TEXT_IMAGE_COVERAGE_THRESHOLD).
+
+    Used so that handwritten/printed content inside an image is captured as
+    real, searchable markdown text instead of staying locked inside a picture.
+
+    Returns ("", 0.0) if OCR is unavailable or finds no text.
     """
     engine = _get_ocr_engine()
     if engine is None:
-        return ""
+        return "", 0.0
 
     try:
         img = Image.open(image_path).convert("RGB")
+        img_w, img_h = img.size
         result = engine(img)
     except Exception as e:
         print(f"[ocr] failed on {image_path.name}: {e}")
-        return ""
+        return "", 0.0
 
     boxes = getattr(result, "boxes", None)
     txts = getattr(result, "txts", None) or []
     scores = getattr(result, "scores", None) or []
 
     if not txts:
-        return ""
+        return "", 0.0
 
     # Pair up (text, score, box) so we can sort into natural reading order
     # (top-to-bottom by the box's mean y-coordinate) even if the engine
-    # returns detections out of order.
+    # returns detections out of order. Also sum up each kept box's area to
+    # compute the overall text coverage ratio.
     items = []
+    total_text_area = 0.0
     for i, t in enumerate(txts):
         t = (t or "").strip()
         if not t:
@@ -236,20 +270,30 @@ def extract_full_text_from_image(image_path: Path) -> str:
         score = scores[i] if i < len(scores) else 1.0
         if score is not None and score < OCR_MIN_CONFIDENCE:
             continue
-        y = 0.0
+        y = float(i)
         if boxes is not None and i < len(boxes):
             try:
                 pts = boxes[i]
                 y = float(sum(p[1] for p in pts) / len(pts))
+                total_text_area += _polygon_area(pts)
             except Exception:
-                y = float(i)  # fall back to detection order
-        else:
-            y = float(i)
+                pass
         items.append((y, t))
 
     items.sort(key=lambda x: x[0])
     lines = [t for _, t in items]
-    return "\n".join(lines).strip()
+    text = "\n".join(lines).strip()
+
+    img_area = max(1.0, float(img_w) * float(img_h))
+    coverage = min(1.0, total_text_area / img_area)
+
+    return text, coverage
+
+
+def extract_full_text_from_image(image_path: Path) -> str:
+    """Backwards-compatible wrapper: returns just the extracted text."""
+    text, _ = ocr_image_full(image_path)
+    return text
 
 
 def _find_subplot_titles(img: Image.Image, segments: list[tuple[int, int]],
@@ -578,32 +622,54 @@ def process_images_dir(images_dir: Path) -> dict[str, list[tuple[Path, str]]]:
 #         image filename as a caption, and split images appear on their
 #         own lines. Each image is now ALSO followed by its full OCR'd text.
 # --------------------------------------------------------------------------
+def _text_as_markdown_lines(extracted: str) -> list[str]:
+    """Formats OCR'd text as plain, readable markdown lines (hard line breaks
+    via a trailing double-space) instead of a code fence, since this is meant
+    to be read as normal document text, not code."""
+    out = []
+    for line in extracted.splitlines():
+        line = line.rstrip()
+        if line:
+            out.append(line + "  ")  # markdown hard line break
+        else:
+            out.append("")
+    return out
+
+
 def _format_image_block(prefix: str, sp: Path, title: str, idx: int) -> list[str]:
-    """Returns the markdown lines for one split part:
-    - If a per-subplot title was OCR'd, emit it as a visible text line on its
-      own so the reader sees the title above the image.
-    - The filename line stays as a caption below the title (or above if no
-      title was detected).
-    - The image line keeps the title in the alt-text for accessibility.
-    - NEW: below the image, the full OCR'd text content of that image part is
-      inserted inside a fenced block, so all handwritten/printed text in the
-      image is also present as real, copyable text.
+    """Returns the markdown lines for one split part.
+
+    Every part is fully OCR'd first. Two outcomes:
+
+    1. TEXT IMAGE (OCR text covers a large fraction of the image area, e.g.
+       a photographed notebook page): the image is DROPPED entirely and only
+       its extracted text is emitted, so the same text never lives solely
+       inside a picture.
+    2. DIAGRAM/CHART (low text coverage, e.g. a plot with a small title): the
+       image is KEPT, and any OCR'd text (title, axis labels, etc.) is still
+       emitted below it as real markdown text — nothing stays image-only.
     """
     name = sp.name
     label = title or f"Part {idx}"
+    extracted, coverage = ocr_image_full(sp)
+
     lines: list[str] = []
+
+    if extracted and coverage >= TEXT_IMAGE_COVERAGE_THRESHOLD:
+        # Text image: no picture, text only.
+        if title:
+            lines.append(f"**{title}**")
+        lines.extend(_text_as_markdown_lines(extracted))
+        return lines
+
+    # Diagram/chart: keep the image, plus any text found on it.
     if title:
         lines.append(f"**{title}**")
     lines.append(f"**{name}**")
     lines.append(f"![{label}]({prefix}{name})")
-
-    extracted = extract_full_text_from_image(sp)
     if extracted:
         lines.append("")
-        lines.append("_Extracted text:_")
-        lines.append("```text")
-        lines.append(extracted)
-        lines.append("```")
+        lines.extend(_text_as_markdown_lines(extracted))
 
     return lines
 
@@ -639,24 +705,26 @@ def update_markdown_with_splits(md_path: Path, split_mapping: dict[str, list[tup
                     new_lines.extend(_format_image_block(prefix, sp, title, i))
                 replaced = True
             elif image_filename:
-                # Non-split image: prepend caption line with the filename,
-                # keep the original image line, then append its full OCR text.
-                new_lines.append(f"**{image_filename}**")
-                new_lines.append(line)
-
                 # Resolve the actual file on disk so we can OCR it. `inside`
                 # is the path as written in the markdown (relative to the
                 # markdown file's own directory).
                 img_on_disk = (md_path.parent / inside).resolve() if inside else None
-                extracted = ""
+                extracted, coverage = ("", 0.0)
                 if img_on_disk and img_on_disk.exists():
-                    extracted = extract_full_text_from_image(img_on_disk)
-                if extracted:
-                    new_lines.append("")
-                    new_lines.append("_Extracted text:_")
-                    new_lines.append("```text")
-                    new_lines.append(extracted)
-                    new_lines.append("```")
+                    extracted, coverage = ocr_image_full(img_on_disk)
+
+                if extracted and coverage >= TEXT_IMAGE_COVERAGE_THRESHOLD:
+                    # Text image (e.g. photographed notebook page): drop the
+                    # picture, keep only the extracted text.
+                    new_lines.extend(_text_as_markdown_lines(extracted))
+                else:
+                    # Diagram/chart (or no text at all): keep the image,
+                    # caption it, and still surface any OCR'd text below it.
+                    new_lines.append(f"**{image_filename}**")
+                    new_lines.append(line)
+                    if extracted:
+                        new_lines.append("")
+                        new_lines.extend(_text_as_markdown_lines(extracted))
                 replaced = True
         if not replaced:
             new_lines.append(line)

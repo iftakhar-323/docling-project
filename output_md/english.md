@@ -1,10 +1,4 @@
-**english__image_000000_6f908a88098ac838841104999bfe1747649cfafbc0acb0ba2a19733bfed24e8f.png**
-![Image](all_images/english__image_000000_6f908a88098ac838841104999bfe1747649cfafbc0acb0ba2a19733bfed24e8f.png)
-
-_Extracted text:_
-```text
-Set-04
-```
+Set-04  
 
 Regrossion:
 
@@ -29,58 +23,52 @@ Linear Rogression: 1 a Prcedictive modecing tecmique.
 - Other Varciable is called - dependent varciasle
 - the best fil- line coould be the line cohice hes the least differuence betweer the estimated ralne annd actal vare.
 
-**english__image_000001_68fef000f0eae4b7c86f474a6502eb3342265cc0d9b23eaca65e9e4f4e155791.png**
-![Image](all_images/english__image_000001_68fef000f0eae4b7c86f474a6502eb3342265cc0d9b23eaca65e9e4f4e155791.png)
-
-_Extracted text:_
-```text
-copaodop=
-sw
-Linearc Rigresiion
-→ ①Dependent.(we Predict thevalt
-Tao variable
-②Independent
-x= independert
-122d
-2
-i6=mxc=slope
-tibo
-C=intercept
-bmp
-2ev byilpib2asued
-Simple linearc Regression.'
-y=do+dixc
-boen wdi = Regressim co-efficent
-moltile linearc egression2dN independentvar.
-J= defendent Var.
-y=20+d1x22
-sust
-6.mp
-for preediction?
-How linear Regression Corks
-Lirar Rogrcenim Performs the tok to preedict a dependent
-Varciable()bared onagirer indeperdentvarciable:S0,
-2M3)
-Hhis regression fechnique finds out ar linear relatimship
-between Cintut) and outplty. ba
-Hypotheis functim for linear tegressi:i
-CV
-b~~
-690
-=xo+xx
-∑(x-x)(y-9)
-wis fik fead 20
-Niv22v
-∑(x-x)2
-Here; doE intercept INibi
-222
-=coefficientof
-trvot?
-once, we find the best do and i yalues, we yoiu
-get tee bost fit Line, sg wher we are finally using
-our model Predictim, it will Predict the Vaine
-of y for tne ingnt valne of x,
-```
+copaodop=  
+sw  
+Linearc Rigresiion  
+→ ①Dependent.(we Predict thevalt  
+Tao variable  
+②Independent  
+x= independert  
+122d  
+2  
+i6=mxc=slope  
+tibo  
+C=intercept  
+bmp  
+2ev byilpib2asued  
+Simple linearc Regression.'  
+y=do+dixc  
+boen wdi = Regressim co-efficent  
+moltile linearc egression2dN independentvar.  
+J= defendent Var.  
+y=20+d1x22  
+sust  
+6.mp  
+for preediction?  
+How linear Regression Corks  
+Lirar Rogrcenim Performs the tok to preedict a dependent  
+Varciable()bared onagirer indeperdentvarciable:S0,  
+2M3)  
+Hhis regression fechnique finds out ar linear relatimship  
+between Cintut) and outplty. ba  
+Hypotheis functim for linear tegressi:i  
+CV  
+b~~  
+690  
+=xo+xx  
+∑(x-x)(y-9)  
+wis fik fead 20  
+Niv22v  
+∑(x-x)2  
+Here; doE intercept INibi  
+222  
+=coefficientof  
+trvot?  
+once, we find the best do and i yalues, we yoiu  
+get tee bost fit Line, sg wher we are finally using  
+our model Predictim, it will Predict the Vaine  
+of y for tne ingnt valne of x,  
 
 sitls
 
@@ -129,14 +117,11 @@ n-2
 **english__image_000002_d9d0b8e98957249d3c8c4af2407bb20a61dd5687a737e50d404a6aef419a9075.png**
 ![Image](all_images/english__image_000002_d9d0b8e98957249d3c8c4af2407bb20a61dd5687a737e50d404a6aef419a9075.png)
 
-_Extracted text:_
-```text
-5
-4
-2
-5
-2
-```
+5  
+4  
+2  
+5  
+2  
 
 0.89
 
@@ -209,26 +194,20 @@ x ()
 
 dabamrp The output of tue logistic regressin is a Sigmoid curve. there are onry 2 Possizk value to make our predictimi fse
 
-**english__image_000003_8e61b127eb4349ce4577a91991ee7c74967af64a5934db860877661cdd30926f.png**
-![Image](all_images/english__image_000003_8e61b127eb4349ce4577a91991ee7c74967af64a5934db860877661cdd30926f.png)
-
-_Extracted text:_
-```text
-Probabilit
-1
-0<d
-outcome=(1)(trne)
-s-curue
-thresho'dvalue20.5
-0.5
-Probability <015
-5xs+
-outcome =0 (False)
-5
-3
-78
-4
-```
+Probabilit  
+1  
+0<d  
+outcome=(1)(trne)  
+s-curue  
+thresho'dvalue20.5  
+0.5  
+Probability <015  
+5xs+  
+outcome =0 (False)  
+5  
+3  
+78  
+4  
 
 →x
 
@@ -243,60 +222,54 @@ BA obblA!Nd
 
 9上
 
-**english__image_000004_1cd87fe306291e246cab5ff05926e61987675086e3119ba62e0cba9151e371b7.png**
-![Image](all_images/english__image_000004_1cd87fe306291e246cab5ff05926e61987675086e3119ba62e0cba9151e371b7.png)
-
-_Extracted text:_
-```text
-(9)Handwrciting
-recognition - matched ore not matched.
-Linearc
-bLogistic
-(4) Models data using
-mumeric. value.
-values.
-® Linearc reelationship beth
-(2) Not reeqairced.
-dependent & independent
-varciable is reequirced,
-(3) The Probability is
-(③) the data is modelled usikg
-rcepreserted as a linearfunction
-a straight line.
-(D Independent varcables
-(A) Must be correlated
-Can be correlated with
-with eacrother.
-eacn other.
-Logistic regresslon ean:
-5) Lineare Feegressin equation
-5)
-P
-J=xotd1x
-in
-20+01℃
--
-6
-1
-Q
-↑
-(3)
-1
-.3
-0.5
-2
-一
-0
-0
-2
-3
-8.Erronrminimizatian
-(8) Error miniznizatin
-techniane..
-fcchnique:
-logistic loss function.
-leont square metnod
-```
+(9)Handwrciting  
+recognition - matched ore not matched.  
+Linearc  
+bLogistic  
+(4) Models data using  
+mumeric. value.  
+values.  
+® Linearc reelationship beth  
+(2) Not reeqairced.  
+dependent & independent  
+varciable is reequirced,  
+(3) The Probability is  
+(③) the data is modelled usikg  
+rcepreserted as a linearfunction  
+a straight line.  
+(D Independent varcables  
+(A) Must be correlated  
+Can be correlated with  
+with eacrother.  
+eacn other.  
+Logistic regresslon ean:  
+5) Lineare Feegressin equation  
+5)  
+P  
+J=xotd1x  
+in  
+20+01℃  
+-  
+6  
+1  
+Q  
+↑  
+(3)  
+1  
+.3  
+0.5  
+2  
+一  
+0  
+0  
+2  
+3  
+8.Erronrminimizatian  
+(8) Error miniznizatin  
+techniane..  
+fcchnique:  
+logistic loss function.  
+leont square metnod  
 
 ## Linear Regression!
 

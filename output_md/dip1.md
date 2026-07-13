@@ -11,10 +11,7 @@ import cv2 import numpy as np import matplotlib.pyplot as plt image_path�
 **dip1__image_000000_18bf7451bd2650cc0b63c7659d15ae4f1b381866c7f785ab98fcd22ee146f8bf.png**
 ![Image](all_images/dip1__image_000000_18bf7451bd2650cc0b63c7659d15ae4f1b381866c7f785ab98fcd22ee146f8bf.png)
 
-_Extracted text:_
-```text
-5
-```
+5  
 
 Setup complete: Image loaded and converted to grayscale.
 
@@ -34,24 +31,22 @@ def double_threshold_hysteresis(image, low_threshold, high_threshold): image�
 
 The Canny edge detection algorithm is applied using three distinct gradient filters: Sobel, Prewitt, and Roberts Cross. To ensure a fair comparison, Gaussian kernel size, sigma, and threshold values are maintained constant across all three filters.
 
-**dip1__image_000001_6b2a2aecf78dafd441f3adf18a857fa49a80e7232d98a4f09bda07851334f781.png**
-![Image](all_images/dip1__image_000001_6b2a2aecf78dafd441f3adf18a857fa49a80e7232d98a4f09bda07851334f781.png)
-
-_Extracted text:_
-```text
-plt.axis('off')
-plt.subplot(1, 3, 3)
-plt.imshow(roberts_edges, cmap='gray')
-plt.title('Canny with Roberts Cross Filter')
-plt.axis('off')
-plt.suptitle('Gradient Filter Comparison for Canny Edge Detection', fontsize=16)
-plt.tight_layout(rect=[0, 0.03, 1, 0.95])
-plt.show()
-Gradient Filter Comparison for Canny Edge Detection
-Canny with Prewitt Filter
-Canny with Roberts Cross Filter
-Canny with Sobel Filter
 ```
+GAUSSIAN_KSIZE = 5 SIGMA = 1.0 LOW_THRESHOLD = 30 HIGH_THRESHOLD = 90 sobel_edges = custom_canny(gray_image, 'sobel', GAUSSIAN_KSIZE, SIGMA, LOW_THRESHOLD, HIGH_TH prewitt_edges = custom_canny(gray_image, 'prewitt', GAUSSIAN_KSIZE, SIGMA, LOW_THRESHOLD, HIG roberts_edges = custom_canny(gray_image, 'roberts', GAUSSIAN_KSIZE, SIGMA, LOW_THRESHOLD, HIG plt.figure(figsize=(18, 6)) plt.subplot(1, 3, 1) plt.imshow(sobel_edges, cmap='gray') plt.title('Canny with Sobel Filter') plt.axis('off') plt.subplot(1, 3, 2) plt.imshow(prewitt_edges, cmap='gray') plt.title('Canny with Prewitt Filter')
+```
+
+plt.axis('off')  
+plt.subplot(1, 3, 3)  
+plt.imshow(roberts_edges, cmap='gray')  
+plt.title('Canny with Roberts Cross Filter')  
+plt.axis('off')  
+plt.suptitle('Gradient Filter Comparison for Canny Edge Detection', fontsize=16)  
+plt.tight_layout(rect=[0, 0.03, 1, 0.95])  
+plt.show()  
+Gradient Filter Comparison for Canny Edge Detection  
+Canny with Prewitt Filter  
+Canny with Roberts Cross Filter  
+Canny with Sobel Filter  
 
 ## Comparison Summary of Gradient Filters:
 
@@ -76,13 +71,10 @@ BEST_FILTER = 'sobel' FIXED_SIGMA = 1.0
 **dip1__image_000002_88f56ae1b1c542bdc2f7dfcfa596deedff49ecb868129a11429e95b78d4f7b82.png**
 ![Image](all_images/dip1__image_000002_88f56ae1b1c542bdc2f7dfcfa596deedff49ecb868129a11429e95b78d4f7b82.png)
 
-_Extracted text:_
-```text
-Canny Edge Detection: Gaussian Kernel Size Comparison (Sobel Filter)
-Kernel Size: 3x3
-Kernel Size: 5x5
-Kernel Size: 7x7
-```
+Canny Edge Detection: Gaussian Kernel Size Comparison (Sobel Filter)  
+Kernel Size: 3x3  
+Kernel Size: 5x5  
+Kernel Size: 7x7  
 
 ## Sigma Value Tuning 
 
@@ -91,14 +83,11 @@ The impact of the sigma value (standard deviation of the Gaussian blur) on edge 
 **dip1__image_000003_1b2f0ecbd658fe2501663cad87e9b1d7f5a468eff25ff8376c0c2ad447a07d1c.png**
 ![Image](all_images/dip1__image_000003_1b2f0ecbd658fe2501663cad87e9b1d7f5a468eff25ff8376c0c2ad447a07d1c.png)
 
-_Extracted text:_
-```text
-plt.show()
-Canny Edge Detection: Sigma Value Comparison (Sobel Filter)
-Sigma: 0.5
-Sigma:1.5
-Sigma: 1.0
-```
+plt.show()  
+Canny Edge Detection: Sigma Value Comparison (Sobel Filter)  
+Sigma: 0.5  
+Sigma:1.5  
+Sigma: 1.0  
 
 ## Threshold Pair Tuning 
 
@@ -107,15 +96,12 @@ This section explores the effect of varying low\_threshold and high\_threshold v
 **dip1__image_000004_2e625d801c33b7155ee659cab4e48241db57b559175f46f7d5808fadbe992aa6.png**
 ![Image](all_images/dip1__image_000004_2e625d801c33b7155ee659cab4e48241db57b559175f46f7d5808fadbe992aa6.png)
 
-_Extracted text:_
-```text
-Original relative threshold pairs: [(0.03, 0.09), (0.05, 0.11), (0.08, 0.16)]
-Scaled absolute threshold pairs (low, high): [(7, 22), (12, 28), (20, 40)]
-Canny Edge Detection: Threshold Comparison (Sobel Filter)
-Thresholds: (0.03, 0.09)
-Thresholds: (0.05, 0.11)
-Thresholds: (0.08,0.16)
-```
+Original relative threshold pairs: [(0.03, 0.09), (0.05, 0.11), (0.08, 0.16)]  
+Scaled absolute threshold pairs (low, high): [(7, 22), (12, 28), (20, 40)]  
+Canny Edge Detection: Threshold Comparison (Sobel Filter)  
+Thresholds: (0.03, 0.09)  
+Thresholds: (0.05, 0.11)  
+Thresholds: (0.08,0.16)  
 
 ## Final Optimized Edge Map 
 
