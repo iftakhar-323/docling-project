@@ -187,6 +187,76 @@ def update_markdown_with_splits(md_path: Path, split_mapping: dict[str, list[Pat
     print(f"[markdown] {md_path.name} updated with split image references")
 
 
+def strip_code_blocks_near_images(md_path: Path) -> None:
+    """Removes ```fenced code blocks``` that appear right next to an image
+    (with only blank lines in between) so that each image is rendered on its
+    own without surrounding OCR'd code text from the figure region."""
+    content = md_path.read_text(encoding="utf-8")
+    lines = content.splitlines()
+
+    # Pre-compute which line indices are images.
+    image_idx = {i for i, line in enumerate(lines) if line.strip().startswith("![")}
+
+    out: list[str] = []
+    i = 0
+    n = len(lines)
+    removed = 0
+
+    while i < n:
+        if i not in image_idx:
+            out.append(lines[i])
+            i += 1
+            continue
+
+        # We are at an image line. Walk backwards through `out` and drop any
+        # ``` fenced blocks whose only content between block-end and this image
+        # is blank lines.
+        # First, find trailing blanks in `out` to know where to start scanning.
+        scan_end = len(out)
+        while scan_end > 0 and out[scan_end - 1].strip() == "":
+            scan_end -= 1
+
+        # From scan_end-1 backwards, walk back across blank lines + closing fence
+        # lines; if we hit a closing fence (```) preceded by a matching opening
+        # fence and only blanks/lines-with-code in between, drop them all.
+        j = scan_end - 1
+        # Only proceed if the immediately preceding non-blank line is a closing fence.
+        if j >= 0 and out[j].strip() == "```":
+            # Find the matching opening fence (also ```).
+            depth = 0
+            k = j
+            found_open = -1
+            while k >= 0:
+                if out[k].strip() == "```":
+                    if depth == 0:
+                        found_open = k
+                        break
+                    depth -= 1
+                k -= 1
+            if found_open > 0 and out[found_open - 1].strip() != "```":
+                # Confirm the block contains only blank lines or a single ```-style
+                # code block (i.e. no prose). Anything that looks like a heading,
+                # paragraph, or list is preserved.
+                block_lines = out[found_open + 1 : j]
+                only_blanks = all(bl.strip() == "" for bl in block_lines)
+                if only_blanks:
+                    # Drop everything from found_open up to (but not including) the
+                    # blanks between the block and the image, then re-add one blank.
+                    del out[found_open:]
+                    removed += 1
+                    # Make sure exactly one blank line separates previous content.
+                    if out and out[-1].strip() != "":
+                        out.append("")
+
+        # Now emit the image line.
+        out.append(lines[i])
+        i += 1
+
+    if removed:
+        md_path.write_text("\n".join(out) + "\n", encoding="utf-8")
+        print(f"[cleanup] removed {removed} code block(s) sitting next to image(s) in {md_path.name}")
+
+
 def find_images_dir_for(md_path: Path) -> Path:
     """Docling usually stores images in a '<stem>_artifacts' or similar folder."""
     candidates = [
@@ -213,6 +283,7 @@ def main():
         images_dir = find_images_dir_for(md_path)
         split_mapping = process_images_dir(images_dir)
         update_markdown_with_splits(md_path, split_mapping)
+        strip_code_blocks_near_images(md_path)
 
     print("\n✔ All done. Check the output_md/ folder.")
 
