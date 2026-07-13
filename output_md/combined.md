@@ -5,556 +5,453 @@ _Generated from 4 source file(s) in `input_docs`._
 
 ---
 
-## Source 1: `Basic Docker Concepts.md`
+## Source 1: `Lab_Report_02_CSE438.md`
 
 
-## Lab Details
+Experiment Name: Interfacing and Testing of Temperature, Humidity, Pressure, Gas, and Distance Sensors using Arduino
 
-## Running an NGINX Web Server in a Docker Container
+## Objectives
 
-### Overview of This Lab
+- To interface and test Temperature, Humidity, Pressure, Gas and Distance sensors with the Arduino Uno and verify their readings on the Serial Monitor.
+- To understand the working principles of the LM35, DHT11, BMP180, MQ135 and HC-SR04 sensors.
+- To calibrate the sensors and develop Arduino programming skills for accurate data acquisition and display.
 
-In this lab, you will learn how to set up and run an NGINX web server inside a Docker container using **Puku CLI** . You will use the integrated terminal in Puku CLI to execute Docker commands, manage containers, and configure an NGINX web server.
+## Introduction
 
-By the end of this lab, you will understand how Docker simplifies application deployment by providing a lightweight, portable, and scalable environment for hosting web applications.
+Sensors are the fundamental building blocks of any embedded or IoT system. They allow a microcontroller such as the Arduino Uno to perceive physical quantities — temperature, humidity, atmospheric pressure, air quality, and distance — and convert them into electrical signals that can be processed, displayed, or transmitted. In this experiment we interfaced five widely used sensors one by one: the analog LM35 temperature sensor, the digital DHT11 temperature/humidity sensor, the I2C-based BMP180 pressure/altitude sensor, the analog MQ135 gas sensor, and the ultrasonic HC-SR04 distance sensor. Each task is implemented as a small Arduino sketch, and the corresponding results are observed on the Serial Monitor, which builds a strong practical foundation for future IoT and smart-monitoring projects.
 
-### What You'll Learn
+## Equipments
 
-- Use Docker commands in the **Puku CLI integrated terminal** to pull images, run containers, and manage container configurations.
-- Deploy an NGINX web server inside a Docker container.
-- Start, stop, restart, and remove Docker containers.
-- View and analyze container logs for monitoring and troubleshooting.
+Hardware Components
 
-Lab start
+- Arduino Uno development board
+- LM35 analog temperature sensor
+- DHT11 temperature and humidity sensor
+- BMP180 barometric pressure and altitude sensor
+- MQ135 air-quality / gas sensor
+- HC-SR04 ultrasonic distance sensor
+- Breadboard for assembling the circuits
+- Jumper Wires (male-to-male and male-to-female)
+- USB Cable (Type A to Type B)
+- Arduino IDE (latest stable release)
+- DHT sensor library by Adafruit
+- Adafruit BMP085 / BMP180 library
+- MQ135 library
+- Basic C / C++ knowledge for understanding the sketches
 
-## Running an NGINX Web Server in a Docker Container
+Software Requirements
 
-In today's DevOps and cloud-native world, the ability to quickly deploy services in isolated environments is essential. **Docker** makes this possible by providing lightweight, portable containers. In this lab, you will use **Puku CLI** and its integrated terminal to build, run, and manage an NGINX web server inside a Docker container.
+## Working Principle of the Sensors
 
-**Basic Docker Concepts__image_000000_39e68af6226d7c9f358e7875c730cf800029a15e0a193e367c9cf7a0abe012ed.png**
-![Image](all_images/Basic Docker Concepts__image_000000_39e68af6226d7c9f358e7875c730cf800029a15e0a193e367c9cf7a0abe012ed.png)
+LM35 Temperature Sensor
 
-Pull Nginx Image  
-Run the Image  
-dockerhub  
-from DockerHub  
-Container  
-Nginx  
-Image  
-Verify the Container is running  
-using  
-"docker ps"  
-Project  
--Volume Mount-  
-usr/share/  
-Workspace/html  
-nginx/html  
+The LM35 is a precision analog temperature sensor whose output voltage is linearly proportional to the Celsius temperature, with a scale factor of 10 mV/°C. Because the output is already calibrated in Celsius, no external trimming is required.
 
-This lab will guide you through the complete process of running an **NGINX web server inside a Docker container** using **Puku CLI** . You will learn how to pull the official NGINX Docker image, create a custom HTML page, configure a volume mount, run the container, and verify that the web server is running successfully.
+DHT11 Temperature and Humidity Sensor
 
-### Lab Overview
+The DHT11 is a low-cost digital sensor that contains a capacitive humidity sensing element and a thermistor. It uses a single-wire bidirectional protocol to send a 40-bit packet containing the integer temperature (°C), the integer relative humidity (% RH) and a checksum.
 
-In this lab, you will:
+BMP180 Pressure and Altitude Sensor
 
-- Understand the basics of Docker and NGINX.
-- Pull the official NGINX Docker image.
-- Create and serve a custom HTML page from a Docker container.
-- Map ports and mount volumes between your local project workspace and the Docker container.
-- Manage the container lifecycle using the **Puku CLI integrated terminal** (start, stop, view logs, and remove containers).
+The BMP180 is a high-precision digital barometric pressure sensor that communicates over I2C. It measures both the absolute pressure of the surrounding air and the temperature, and from these values the altitude above sea level can be calculated using the international barometric formula.
 
-## Concepts Explained
+MQ135 Gas Sensor
 
-Before starting the lab, let's understand the key technologies used.
+The MQ135 is an analog gas sensor that is sensitive to a range of harmful gases such as NH3, NOx, alcohol, benzene, smoke and CO2. The internal resistance of the sensing element changes with the gas concentration, producing a varying analog voltage that is read by the Arduino ADC and converted to a parts-per-million (PPM) value.
 
-### What is Docker?
+HC-SR04 Ultrasonic Distance Sensor
 
-Docker is a containerization platform that packages applications and their dependencies into **containers** . These containers are lightweight, portable, and provide a consistent runtime environment across different systems.
+The HC-SR04 measures distance by emitting a 40 kHz ultrasonic burst from the trigger pin and listening for the echo on the echo pin. The time between the trigger and the echo is proportional to the distance of the nearest object, which is calculated as distance = (duration × 0.0343) / 2 cm (speed of sound in air is ~343 m/s).
 
-### What is NGINX?
+## Procedure
 
-NGINX is a high-performance web server that serves web content efficiently. It can also function as a reverse proxy, load balancer, and HTTP cache, making it a popular choice for hosting modern web applications.
+Task 1: LM35 Temperature Sensor
 
-### Docker Image vs. Container
+In this task the LM35 output pin is connected to analog input A0 of the Arduino Uno, while VCC and GND are connected to the 5 V and GND rails. The Arduino reads the analog voltage, converts it to a digital value using the 10-bit ADC, and converts the value to a temperature in Celsius using the 10 mV/°C scale factor. The temperature is then displayed on the Serial Monitor in both °C and °F.
 
-- **Image:** A read-only template that contains everything needed to run an application (for example, the official **NGINX** image).
-- **Container:** A running instance of an image with its own isolated filesystem, processes, and networking.
+1.   Connect LM35 VCC to 5 V, GND to GND, and the analog output to A0.
 
-## Hands-on: Running NGINX in Docker
+2.   Open the Arduino IDE and write the sketch shown below.
 
-In the following exercises, you will use the **Puku CLI integrated terminal** to pull the official NGINX Docker image, run it as a container, and manage it using Docker commands.
+3.   Select the correct board (Arduino Uno) and port, then upload the sketch.
 
-Yes, exactly. Since you're **actually running the commands in Puku CLI** , your documentation should say **Puku CLI** , not AWS Terminal. The commands remain the same.
+4.   Open the Serial Monitor at 9600 baud and observe the readings.
 
-Here's a professional version for your docs:
+Source Code:
 
-### Step 1: Pull the Official NGINX Docker Image
+const int lm35Pin = A0;
 
-Open **Puku CLI** and launch the **integrated terminal** .
+void setup() {
 
-Run the following command to download the latest official NGINX image from Docker Hub:
+Serial.begin(9600);
 
-docker pull nginx
-
-**Basic Docker Concepts__image_000001_3d0f24c68bef2702dd4fdfe756e9ada4d7031e99ced5f0bc1c249906e5faf772.png**
-![Image](all_images/Basic Docker Concepts__image_000001_3d0f24c68bef2702dd4fdfe756e9ada4d7031e99ced5f0bc1c249906e5faf772.png)
-
-PROBLEMS  
-DEBUG CONSOLE  
-bash  
-OUTPUT  
-TERMINAL  
-X  
-iftakhar@iftakhar-PC:~/Poridhi$  
-docker pull nginx  
-
-Docker will download the required image layers. Once the download is complete, the latest NGINX image will be available on your local machine.
-
-**Expected Output**
-
-You should see output similar to the following in the Puku CLI terminal:
-
-iftakhar@iftakhar-PC:~/Poridhi$ docker pull nginx  
-Using default tag: latest  
-latest: Pulling from library/nginx  
-1645c1e06f46: Pull complete  
-1b30016634d5: Pull complete  
-e95a6c7ea7d4: Pull complete  
-acf093e7a04f: Pull complete  
-cd9307c9ecd8: Pull complete  
-fcb6fd84b2a0: Pull complete  
-df68ee7e7a00: Pull complete  
-1cf7d051b485:Download complete  
-e2c07e54e55a: Download complete  
-Digest: sha256:ec4ed8b5299e5e90694af7750eb6dffd2627317d30544d056b0371f8082f7bce  
-Status: Downloaded newer image for nginx:latest  
-docker.io/library/nginx:latest  
-iftakhar@iftakhar-PC:~/Poridhi$  
-
-#### Verify the Download
-
-To confirm that the image has been downloaded successfully, run:
-
-docker images
-
-**Basic Docker Concepts__image_000003_d3fc8307702e79a6b4cdc1b678530e15cf63a6a43cb7cca5084874114778b5b2.png**
-![Image](all_images/Basic Docker Concepts__image_000003_d3fc8307702e79a6b4cdc1b678530e15cf63a6a43cb7cca5084874114778b5b2.png)
-
-o  
-docker  
-iftakhar@iftakhar-PC:~/Poridhi$  
-images  
-0  
-
-**Expected Output**
-
-The command should list the nginx image with the latest tag.
-
-iftakhar@iftakhar-PC:~/Poridhi$ docker images  
-Info  
-In Use  
-IMAGE  
-ID  
-DISK USAGE  
-CONTENT SIZE  
-EXTRA  
-build-runner-project_api:latest  
-a9eeb7cd9d9f  
-439MB  
-106MB  
-build-runner-project_worker:latest  
-fa01c8c718c6  
-439MB  
-106MB  
-99af191ea365  
-build-runner/0c606283-15f6-4706-864a-3f433bala4d0:latest  
-177MB  
-43.2MB  
-93af4c330ff8  
-124MB  
-build-runner/0c92df8a-5b6e-4e3d-9236-90a668dc60a5:latest  
-451MB  
-93af4c330ff8  
-build-runner/14e4a58f-9210-4326-a9d3-27dc3b000354:latest  
-451MB  
-124MB  
-build-runner/309c6d47-5556-4373-a0c8-9d472910a8c7:latest  
-93af4c330ff8  
-451MB  
-124MB  
-build-runner/5fc26aa3-41ee-4c3f-923a-5efe3c1dc1b6:latest  
-93af4c330ff8  
-451MB  
-124MB  
-93af4c330ff8  
-build-runner/669b00b5-c03f-494a-8bd9-4b6d72e0217a:latest  
-451MB  
-124MB  
-93af4c330ff8  
-124MB  
-build-runner/7429b478-6a03-4dbe-8e92-3f3bcf0a8323:latest  
-451MB  
-build-runner/be4a3148-46b7-4f75-9150-c3900be78bee:latest  
-7688c88a8738  
-451MB  
-124MB  
-7688c88a8738  
-build-runner/c0a0458e-d782-4c59-a2be-49e7a76c2572:latest  
-451MB  
-124MB  
-e7eb96123c54  
-U  
-ghcr.io/iftakhar-323/demo-app:latest  
-177MB  
-43.2MB  
-191fb7f5390f  
-1.17GB  
-265MB  
-ghcr.io/mlflow/mlflow:v2.22.0  
-25.9kB  
-hello-world:latest  
-0e760fdfbc48  
-9.49kB  
-minio/minio:RELEASE.2025-09-07T16-13-09Z  
-14cea493d9a3  
-241MB  
-62.2MB  
-0b4c7bd72b0e  
-ml-fastapi-app:latest  
-820MB  
-175MB  
-285MB  
-ml-tracker-mlflow:latest  
-84dcd250ea95  
-1.24GB  
-ec4ed8b5299e  
-nginx:latest  
-241MB  
-66MB  
-230MB  
-968df39aedce  
-57.8MB  
-node:22-alpine  
-164MB  
-1b92e7a80c02  
-633MB  
-postgres:15  
-e013e867e712  
-420MB  
-117MB  
-U  
-postgres:16-alpine  
-a39549e211a1  
-179MB  
-45.4MB  
-python:3.12-slim  
-09160599abd2  
-155MB  
-38.2MB  
-redis:alpine  
-U  
-611MB  
-57adc8acda08  
-152MB  
-smart_park-backend:latest  
-311MB  
-smart park-frontend:latest  
-0c2ce49a7c50  
-1.22GB  
-f3d28607ddd7  
-160MB  
-45.3MB  
-ubuntu:latest  
-iftakhar@iftakhar-PC:~/Poridhi$  
-口  
-
-This format is much cleaner because the screenshots you capture from **Puku CLI** will naturally match the text in your documentation.
-
-Here's the Puku CLI version with only the necessary changes. The commands stay the same except for the project path.
-
-### Step 2: Create a Directory for Web Content
-
-Open the **Puku CLI integrated terminal** and create a directory to store your custom HTML content. This directory will later be mounted into the NGINX container.
-
-iftakhar@iftakhar-PC:~/Poridhi$ mkdir -p r  
-nginx-lab/html  
-iftakhar@iftakhar-PC:~/Poridhi$  
-_  
-
-This directory will act as the source for the web content served by the NGINX container, allowing you to update files without modifying the container itself.
-
-### Step 3: Create a Simple Web Page
-
-Create a simple HTML page inside the html directory by running the following command:
-
-iftakhar@iftakhar-PC:~/Poridhi$  
-'<h1>Hello from NGINX running in Docker!</h1>'  
-nginx-lab/html/index.html  
-echo  
-
-This page will be served by the NGINX web server once the container is running.
-
-### Step 4: Run the NGINX Container
-
-From the **Puku CLI integrated terminal** , run the following command:
-
-iftakhar@iftakhar-PC:~/Poridhi$ docker run --name my-nginx  
--v $(pwd)/nginx-lab/html:/usr/share/nginx/html:ro  
--p 8000:80  
--d nginx  
-
-**Note:** On Windows PowerShell, replace $(pwd) with ${PWD} if required.
-
-#### Command Breakdown
-
-- --name my-nginx – Assigns the name **my-nginx** to the container.
-- -v $(pwd)/nginx-lab/html:/usr/share/nginx/html:ro – Mounts your local HTML directory into the container's web root in read-only mode.
-- -p 8000:80 – Maps port **8000** on your machine to port **80** inside the container.
-- -d nginx – Runs the NGINX container in detached mode.
-
-**Expected Output**
-
-If the command executes successfully, Docker will return a long container ID.
-
-iftakhar@iftakhar-PC:~/Poridhi$ docker run --name my-nginx  
--v $(pwd)/nginx-lab/html:/usr/share/nginx/html:ro  
--p 50000:80  
--d nginx  
-8106ee13f2aab334720b134d3b913e9b0a42f712b13d8fcbeba0b3150a0066bb  
-iftakhar@iftakhar-PC:~/Poridhi$  
-
-## 
-
-## Step 5: Verify the Setup
-
-### Check Running Containers
-
-Run the following command to confirm that the NGINX container is running:
-
-CaOOOOROCTCaORaaaaUOnCTaZTIzHRo  
-I6aCTCaCntCTaoZ+CCaRRZLCTaOOOTo  
-iftakhar@iftakhar-PC:~/Poridhi$ docker ps  
-CONTAINER ID  
-IMAGE  
-COMMAND  
-CREATED  
-STATUS  
-PORTS  
-NAMES  
-II  
-8106ee13f2aa  
-7  
-0.0.0.0:500  
-Up 7 minutes  
-"/docker-entrypoint.  
-nginx  
-minutes ago  
-00->80/tcp, [::]:50000->80/tcp  
-my-nginx  
-II  
-99ca1a076de7  
-ml-tracker-mlflow  
-"mlflow server --hos.  
-0.0.0.0:500  
-Up 2 days (unhealthy)  
-2 days ago  
-mltracker-mlflow  
-0->5000/tcp, [::]:5000->5000/tcp  
-II  
-46cd8ec48e3b  
-0.0.0.0:543  
-'docker-entrypoint.s.  
-2 days ago  
-postgres:16-alpine  
-Up 2 days (healthy)  
-2->5432/tcp,[::]:5432->5432/tcp  
-mltracker-postgres  
-minio/minio:RELEASE.2025-09-07T16-13-09Z  
-b3bc11e07f95  
-z"/usr/bin/docker-ent..."  
-0.0.0.0:900  
-2 days ago  
-Up 2 days (healthy)  
-0-9001->9000-9001/tcp, [::]:9000-9001->9000-9001/tcp  
-mltracker-minio  
-a5d37b839de4  
-0.0.0.0:808  
-ghcr.io/iftakhar-323/demo-app:latest  
-Up 7 days  
-9 days ago  
-'python /app.py  
-0->8080/tcp，[::]:8080->8080/tcp  
-demo-app  
-iftakhar@iftakhar-PC:~/Poridhi$■  
-
-Verify that:
-
-- The container name is **my-nginx**
-- The status is **Up**
-- **Host port 5000 is mapped to container port 80**
-
-### View the Web Page
-
-Test the web server directly from the terminal:
-
-curl http://localhost:50000
-
-Expected output:
-
-**Basic Docker Concepts__image_000010_d64048952936f48016d8e9ea0550e2e399a991fd8d490401f6d1e16968a88dff.png**
-![Image](all_images/Basic Docker Concepts__image_000010_d64048952936f48016d8e9ea0550e2e399a991fd8d490401f6d1e16968a88dff.png)
-
-localhost:50000  
-C  
-三口  
-Hello from NGINX  
-running in Docker!  
-
-If you're using **Puku CLI** , you can also open the forwarded port from the Ports panel or the generated preview URL to view the page in your browser.
-
-You should see:
-
-Hello from NGINX running in Docker!
-
-## Managing the NGINX Container
-
-### Stop the Container
-
-docker stop my-nginx
-
-### Start the Container Again
-
-docker start my-nginx
-
-### View Container Logs
-
-Display the NGINX logs:
-
-docker logs my-nginx
-
-Example output:
-
-ddp -ouən  
-iftakhar@iftakhar-PC:~/Poridhi$ docker logs my-nginx  
-/docker-entrypoint.sh: /docker-entrypoint.d/ is not empty, will attempt to perform configuration  
-/docker-entrypoint.sh: Looking for shell scripts in /docker-entrypoint.d/  
-/docker-entrypoint.sh: Launching /docker-entrypoint.d/10-listen-on-ipv6-by-default.sh  
-10-listen-on-ipv6-by-default.sh: info: Getting the checksum of /etc/nginx/conf.d/default.conf  
-10-listen-on-ipv6-by-default.sh: info: Enabled listen on IPv6 in /etc/nginx/conf.d/default.conf  
-/docker-entrypoint.sh: Sourcing /docker-entrypoint.d/15-local-resolvers.envsh  
-/docker-entrypoint.sh: Launching /docker-entrypoint.d/20-envsubst-on-templates.sh  
-/docker-entrypoint.sh: Launching/docker-entrypoint.d/30-tune-worker-processes.sh  
-/docker-entrypoint.sh: Configuration complete; ready for start up  
-2026/06/25 08:47:19 [notice] 1#1: using the "epoll" event method  
-[notice] 1#1: nginx/1.31.2  
-2026/06/25 08:47:19  
-[notice]  
-2026/06/25 08:47:19  
-1 1#1: built by gcc 14.2.0 (Debian 14.2.0-19)  
-j 1#1: 0S: Linux 6.17.0-35-generic  
-2026/06/25 08:47:19  
-[notice]  
-2026/06/25 08:47:19  
-[notice]  
-1#1: getrlimit(RLIMIT_NOFILE):1024:524288  
-2026/06/25 08:47:19  
-[notice]  
-1#1: start worker processes  
-2026/06/25 08:47:19  
-[notice]  
-1#1: start worker process 29  
-08:47:19  
-1#1: start worker process 30  
-2026/06/25  
-[notice]  
-[notice]  
-2026/06/25 08:47:19  
-1#1: start worker process 31  
-2026/06/25 08:47:19  
-[notice]  
-1#1: start worker process 32  
-2026/06/25 08:47:19  
-[notice]  
-1#1: start worker process 33  
-2026/06/25 08:47:19  
-[notice]  
-1#1: start worker process 34  
-2026/06/25 08:47:19  
-[notice]  
-1#1: start worker process 35  
-2026/06/25 08:47:19  
-[notice]  
-1#1: start worker process 36  
-2026/06/25  
-08:47:19  
-[notice]  
-1#1: start worker  
-process 37  
-2026/06/25  
-08:47:19  
-[notice]  
-1#1: start worker process 38  
-2026/06/25 08:47:19  
-[notice]  
-1#1: start worker process 39  
-2026/06/25 08:47:19  
-1#1: start worker process 40  
-[notice]  
-2026/06/25 08:47:19  
-1#1: start worker process 41  
-[notice]  
-[notice]  
-1#1: start worker process 42  
-2026/06/25 08:47:19  
-2026/06/25 08:47:19  
-1#1: start worker process 43  
-[notice]  
-2026/06/25 08:47:19  
-1#1: start worker process 44  
-[notice]  
-"-" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, li  
-172.17.0.1  
-[25/Jun/2026:09:01:27 +0000] "GET / HTTP/1.1" 200 45  
-ke Gecko) Chrome/148.0.0.0 Safari/537.36" "_"  
-2a :   t s  : t  (   :#  :: n  
-.0.1, server: localhost, request: "GET /favicon.ico HTTP/1.1", host: "localhost:50000", referrer: "http://localhost:50000/"  
-1  ) / 00:0//:  0 / / 1. [00+ L:::// - - 6  
-64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36" "_"  
-iftakhar@iftakhar-PC:~/Poridhi$■  
-
-Viewing logs is useful for debugging configuration issues and monitoring the container.
-
-## Remove the Container
-
-Once you're finished with the lab, stop and remove the container.
-
-Stop the container:
-
-docker stop my-nginx
-
-Remove the container:
-
-docker rm my-nginx
-
-The NGINX image will remain on your system, allowing you to create new containers without downloading the image again.
+}
+
+void loop() {
+
+int analogValue = analogRead(lm35Pin);
+
+float voltage = (analogValue * 5.0) / 1023.0;
+
+float temperatureC = voltage * 100.0;
+
+float temperatureF = (temperatureC * 9.0 / 5.0) + 32.0;
+
+Serial.print("Temperature: ");
+
+Serial.print(temperatureC);
+
+Serial.print(" C  ");
+
+Serial.print(temperatureF);
+
+Serial.println(" F");
+
+delay(1000);
+
+}
+
+Circuit Diagram:
+
+**Lab_Report_02_CSE438__image_000000_52910f2c974e81326414a3bcc4357435c697cfa938666558b44f2be9acdee8be.png**
+![Image](all_images/Lab_Report_02_CSE438__image_000000_52910f2c974e81326414a3bcc4357435c697cfa938666558b44f2be9acdee8be.png)
+
+MEGA 2560  
+DrarTA  
+
+Output:
+
+Temperature: 31.74 C  89.13 F
+
+Temperature: 31.25 C  88.25 F
+
+Temperature: 32.10 C  89.78 F
+
+Task 2: DHT11 Temperature and Humidity Sensor
+
+The DHT11 data pin is connected to digital pin 2 of the Arduino Uno, and VCC and GND are connected to 5 V and GND respectively. A 10 kΩ pull-up resistor is added between the data line and VCC as recommended by the manufacturer. The Adafruit DHT library is used to read the humidity and temperature values, which are printed on the Serial Monitor.
+
+1.   Connect DHT11 VCC to 5 V, GND to GND, and the data pin to D2 with a 10 kΩ pull-up resistor to 5 V.
+
+2.   Install the Adafruit DHT sensor library via the Arduino Library Manager.
+
+3.   Upload the sketch and open the Serial Monitor at 9600 baud.
+
+Source Code:
+
+#include &lt;DHT.h&gt;
+
+#define DHTPIN 2
+
+#define DHTTYPE DHT11
+
+DHT dht(DHTPIN, DHTTYPE);
+
+void setup() {
+
+Serial.begin(9600);
+
+dht.begin();
+
+}
+
+void loop() {
+
+float humidity = dht.readHumidity();
+
+float temperatureC = dht.readTemperature();
+
+float temperatureF = dht.readTemperature(true);
+
+if (isnan(humidity) || isnan(temperatureC)) {
+
+Serial.println("Failed to read from DHT sensor!");
+
+return;
+
+}
+
+Serial.print("Humidity: ");
+
+Serial.print(humidity);
+
+Serial.println(" %");
+
+Serial.print("Temperature (Celsius): ");
+
+Serial.print(temperatureC);
+
+Serial.println(" C");
+
+Serial.print("Temperature (Fahrenheit): ");
+
+Serial.print(temperatureF);
+
+Serial.println(" F");
+
+Serial.println("-------------------");
+
+delay(2000);
+
+}
+
+Circuit Diagram:
+
+**Lab_Report_02_CSE438__image_000001_03d432f39a2664f92e35b7c201e9a9c04cb51cb42d17be825a2eb147879850e3.png**
+![Image](all_images/Lab_Report_02_CSE438__image_000001_03d432f39a2664f92e35b7c201e9a9c04cb51cb42d17be825a2eb147879850e3.png)
+
+ao  
+CC SDA T  
+
+Output:
+
+Humidity: 67%
+
+Temperature: 31 C
+
+Temperature: 87.8 F
+
+-------------------
+
+Humidity: 68%
+
+Temperature: 32 C
+
+Temperature: 89.6 F
+
+Task 3: BMP180 Pressure and Altitude Sensor
+
+The BMP180 communicates with the Arduino Uno over the I2C bus, so its SDA and SCL pins are connected to A4 and A5 respectively, VCC is connected to 3.3 V (or 5 V depending on the breakout board) and GND to GND. The Adafruit BMP085 library (which also supports the BMP180) is used to initialise the sensor and read both the barometric pressure and the calculated altitude.
+
+1.   Connect BMP180 VCC to 3.3 V, GND to GND, SDA to A4 and SCL to A5.
+
+2.   Install the Adafruit BMP085 / BMP180 library via the Library Manager.
+
+3.   Upload the sketch and open the Serial Monitor at 9600 baud.
+
+Source Code:
+
+#include &lt;Wire.h&gt;
+
+#include &lt;Adafruit\_BMP085.h&gt;
+
+Adafruit\_BMP085 bmp;
+
+void setup() {
+
+Serial.begin(9600);
+
+if (!bmp.begin()) {
+
+Serial.println("BMP180 sensor not detected. Check wiring.");
+
+while (1);
+
+}
+
+}
+
+void loop() {
+
+float pressure = bmp.readPressure() / 100.0;   // convert Pa to hPa
+
+float altitude = bmp.readAltitude();            // metres above sea level
+
+Serial.print("Pressure: ");
+
+Serial.print(pressure);
+
+Serial.println(" hPa");
+
+Serial.print("Altitude: ");
+
+Serial.print(altitude);
+
+Serial.println(" m");
+
+Serial.println("------------------");
+
+delay(2000);
+
+}
+
+Circuit Diagram:
+
+**Lab_Report_02_CSE438__image_000002_a5b667e3d9c32f22642880f60eb3f1b6e147f6901d02c474f37858185adfe8f4.png**
+![Image](all_images/Lab_Report_02_CSE438__image_000002_a5b667e3d9c32f22642880f60eb3f1b6e147f6901d02c474f37858185adfe8f4.png)
+
+HHE  
+
+Output:
+
+Pressure: 999.73 hPa
+
+Altitude: 113.26 m
+
+------------------
+
+Pressure: 999.72 hPa
+
+Altitude: 115.01 m
+
+Task 4: MQ135 Gas Sensor
+
+The MQ135 analog output is connected to A0, VCC to 5 V and GND to GND. The sensor needs a warm-up time of at least 20 seconds (and ideally a few minutes) before its readings stabilise. The MQ135 library converts the raw analog reading to an estimated CO2 concentration in PPM, which is printed on the Serial Monitor.
+
+1.   Connect MQ135 VCC to 5 V, GND to GND, and the analog output to A0.
+
+2.   Install the MQ135 library and allow the sensor to warm up for at least 20 seconds.
+
+3.   Upload the sketch and observe the CO2 concentration on the Serial Monitor.
+
+Source Code:
+
+#include "MQ135.h"
+
+#define ANALOG\_PIN A0
+
+MQ135 gasSensor = MQ135(ANALOG\_PIN);
+
+void setup() {
+
+Serial.begin(9600);
+
+Serial.println("Warming up MQ135 sensor...");
+
+delay(20000);
+
+}
+
+void loop() {
+
+float ppm = gasSensor.getPPM();
+
+Serial.print("CO2 Concentration: ");
+
+Serial.print(ppm);
+
+Serial.println(" PPM");
+
+Serial.println("------------------");
+
+delay(2000);
+
+}
+
+Circuit Diagram:
+
+**Lab_Report_02_CSE438__image_000003_94e01aecf3cf0804f34e665ad6e5e9475470dbc411ae9b0e52f43bf5e09817cf.png**
+![Image](all_images/Lab_Report_02_CSE438__image_000003_94e01aecf3cf0804f34e665ad6e5e9475470dbc411ae9b0e52f43bf5e09817cf.png)
+
+seL  
+50A  
+Andin  
+E,s0  
+
+Output:
+
+CO2 Concentration: 16135.71 PPM
+
+------------------
+
+CO2 Concentration: 15393.25 PPM
+
+Task 5: HC-SR04 Ultrasonic Distance Sensor
+
+The HC-SR04 has four pins: VCC (5 V), GND, TRIG and ECHO. The TRIG pin is connected to digital pin 8 and the ECHO pin to digital pin 9 of the Arduino. A 10 µs pulse is sent on TRIG, the sensor emits an ultrasonic burst, and the duration of the resulting echo pulse on the ECHO pin is measured with pulseIn(). The distance is then calculated using the speed of sound in air.
+
+1.   Connect HC-SR04 VCC to 5 V, GND to GND, TRIG to D8 and ECHO to D9.
+
+2.   Upload the sketch and open the Serial Monitor at 9600 baud.
+
+3.   Place an object in front of the sensor at different distances and observe the readings.
+
+Source Code:
+
+#define TRIG\_PIN 8
+
+#define ECHO\_PIN 9
+
+void setup() {
+
+Serial.begin(9600);
+
+pinMode(TRIG\_PIN, OUTPUT);
+
+pinMode(ECHO\_PIN, INPUT);
+
+}
+
+void loop() {
+
+long duration;
+
+float distance;
+
+digitalWrite(TRIG\_PIN, LOW);
+
+delayMicroseconds(2);
+
+digitalWrite(TRIG\_PIN, HIGH);
+
+delayMicroseconds(10);
+
+digitalWrite(TRIG\_PIN, LOW);
+
+duration = pulseIn(ECHO\_PIN, HIGH);
+
+distance = (duration * 0.0343) / 2.0;
+
+Serial.print("Distance: ");
+
+Serial.print(distance);
+
+Serial.println(" cm");
+
+delay(2000);
+
+}
+
+Circuit Diagram:
+
+**Lab_Report_02_CSE438__image_000004_393afd05d29ec7264ba37c480c96dfe5a4a8623123df4b7f3a59aaa90f289036.png**
+![Image](all_images/Lab_Report_02_CSE438__image_000004_393afd05d29ec7264ba37c480c96dfe5a4a8623123df4b7f3a59aaa90f289036.png)
+
+SeL  
+2010578  
+
+Output:
+
+Distance: 34.04 cm
+
+Distance: 36.43 cm
+
+Distance: 37.31 cm
+
+Distance: 35.44 cm
+
+Distance: 36.20 cm
+
+## Discussion
+
+This experiment gave us a clear, hands-on understanding of how five very different sensors — analog (LM35, MQ135), single-wire digital (DHT11), I2C (BMP180) and ultrasonic (HC-SR04) — are connected to and read by a single Arduino Uno. The LM35 responded quickly and almost linearly to temperature changes, confirming its 10 mV/°C scale factor. The DHT11 needed a short warm-up, after which it returned stable humidity and temperature readings at a 2-second interval. The BMP180 reported atmospheric pressure around 999.7 hPa, which is reasonable for a low-elevation indoor environment, and the calculated altitude of around 113–115 m matches the local elevation of our lab.
+
+The MQ135 produced CO2 values in the order of 15 000 PPM, which is well above the typical indoor level (400–1000 PPM). This is expected: the MQ135 library is only a rough estimate, and a single-point calibration in clean air (R0) is needed for accurate absolute values. The reading is, however, perfectly usable for detecting relative changes — for example, when the air becomes noticeably more polluted. The HC-SR04 consistently returned distances in the 34–37 cm range when an object was placed in front of it, which is well within its 2–400 cm specification.
+
+A few practical issues were solved during the experiment. The DHT11 initially returned NaN values because the data-line pull-up resistor was missing. The BMP180 had to be powered from 3.3 V rather than 5 V on our particular breakout board. And the MQ135 needed its long warm-up delay to give sensible values. All of these were great reminders that real sensor work is always iterative: read the datasheet, wire the circuit carefully, watch the Serial Monitor, and adjust until the behaviour matches the theory.
 
 ## Conclusion
 
-Congratulations! 🎉
+The experiment was completed successfully. Using the Arduino Uno, we were able to interface and test five commonly used sensors — the LM35 temperature sensor, the DHT11 temperature/humidity sensor, the BMP180 pressure/altitude sensor, the MQ135 gas sensor and the HC-SR04 ultrasonic distance sensor — and to display their readings on the Serial Monitor. The lab not only strengthened our understanding of the individual sensor principles but also showed how analog, digital, I2C and ultrasonic interfaces can be combined on a single Arduino platform. These building blocks will be directly useful in upcoming IoT, smart monitoring and embedded systems projects.
 
-You have successfully deployed an **NGINX web server inside a Docker container using Puku CLI** .
+## References
 
-Throughout this lab, you learned how to:
-
-- Pull a Docker image from Docker Hub.
-- Run an NGINX container.
-- Map host ports to container ports.
-- Mount a local directory to serve a custom HTML page.
-- Verify that the container is running.
-- Access the web server using both curl and the Puku CLI browser preview.
-- View container logs for troubleshooting.
-- Stop, restart, and remove Docker containers.
-
-This exercise demonstrates how Docker provides a portable and reproducible environment for running web applications. Using **Puku CLI** , you can develop, test, and manage containerized applications directly from your browser without installing Docker locally.
+- Arduino Official Website — https://www.arduino.cc
+- LM35 Datasheet — Texas Instruments
+- DHT11 Datasheet — Aosong Electronics
+- BMP180 Datasheet — Bosch Sensortec
+- MQ135 Datasheet — Hanwei Electronics
+- HC-SR04 Ultrasonic Sensor — Cytron Technologies
 
 
 ---
