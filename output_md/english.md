@@ -24,18 +24,8 @@ Linear Rogression: 1 a Prcedictive modecing tecmique.
 - Other Varciable is called - dependent varciasle
 - the best fil- line coould be the line cohice hes the least differuence betweer the estimated ralne annd actal vare.
 
-**Part 1**
-**english__image_000001_68fef000f0eae4b7c86f474a6502eb3342265cc0d9b23eaca65e9e4f4e155791_part1.png**
-![Part 1](all_images/english__image_000001_68fef000f0eae4b7c86f474a6502eb3342265cc0d9b23eaca65e9e4f4e155791_part1.png)
-**Part 2**
-**english__image_000001_68fef000f0eae4b7c86f474a6502eb3342265cc0d9b23eaca65e9e4f4e155791_part2.png**
-![Part 2](all_images/english__image_000001_68fef000f0eae4b7c86f474a6502eb3342265cc0d9b23eaca65e9e4f4e155791_part2.png)
-**Part 3**
-**english__image_000001_68fef000f0eae4b7c86f474a6502eb3342265cc0d9b23eaca65e9e4f4e155791_part3.png**
-![Part 3](all_images/english__image_000001_68fef000f0eae4b7c86f474a6502eb3342265cc0d9b23eaca65e9e4f4e155791_part3.png)
-**Part 4**
-**english__image_000001_68fef000f0eae4b7c86f474a6502eb3342265cc0d9b23eaca65e9e4f4e155791_part4.png**
-![Part 4](all_images/english__image_000001_68fef000f0eae4b7c86f474a6502eb3342265cc0d9b23eaca65e9e4f4e155791_part4.png)
+**english__image_000001_68fef000f0eae4b7c86f474a6502eb3342265cc0d9b23eaca65e9e4f4e155791.png**
+![Image](all_images/english__image_000001_68fef000f0eae4b7c86f474a6502eb3342265cc0d9b23eaca65e9e4f4e155791.png)
 
 sitls
 

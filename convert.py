@@ -30,8 +30,12 @@ SUPPORTED_EXTENSIONS = (".pdf", ".pptx", ".docx")
 
 # Grid-splitting tuning (adjust these if splitting doesn't work well)
 WHITE_THRESHOLD = 235       # column/row mean brightness above this is considered a gap
-MIN_GAP_WIDTH = 5           # a gap narrower than this is ignored (avoids noise)
-MIN_SEGMENT_SIZE = 40       # segments smaller than this are discarded as noise
+MIN_GAP_WIDTH = 20          # a gap narrower than this is ignored (avoids noise from text spacing)
+MIN_SEGMENT_SIZE = 120      # segments smaller than this are discarded as noise
+# An aspect-ratio sanity check: if any candidate segment is unreasonably
+# narrow vs the full image, we reject the whole split (it's almost certainly
+# a page with text columns, not a grid of subplots).
+MIN_SEGMENT_RATIO = 0.18    # smallest segment must be >= this fraction of full width/height
 
 
 # --------------------------------------------------------------------------
@@ -202,28 +206,46 @@ def _find_subplot_titles(img: Image.Image, segments: list[tuple[int, int]],
 
 
 def _segments_from_gap_mask(gap_mask: np.ndarray) -> list[tuple[int, int]]:
-    """Extracts real content segments (start, end) from the gap mask,
-    ignoring gaps narrower than MIN_GAP_WIDTH."""
+    """Extracts real content segments (start, end) from the gap mask.
+
+    Scans the mask for runs of consecutive SOLID (non-gap) pixels. Each gap
+    in between is checked separately: only gaps >= MIN_GAP_WIDTH are
+    treated as real separators. Gaps narrower than MIN_GAP_WIDTH are
+    bridged so they don't fragment a real content block."""
     n = len(gap_mask)
+    if n == 0:
+        return []
+
+    # Build a "narrow-gap-bridged" mask: True only where the gap run length
+    # so far (and projected forward) is wide enough to count as a real gap.
+    # Easier: find solid runs directly and split them on real gaps.
     segments = []
-    start = None
-    gap_run = 0
+    seg_start = 0        # start of the current candidate segment
+    in_segment = not gap_mask[0]   # are we currently inside a solid run?
+    gap_len = 0          # length of the current gap (gap_mask=True) run
 
     for i in range(n):
         if not gap_mask[i]:
-            if start is None:
-                start = i
-            gap_run = 0
+            # solid pixel
+            if not in_segment:
+                # transitioning from gap into a new solid run
+                in_segment = True
+                seg_start = i
+            gap_len = 0
         else:
-            gap_run += 1
-            if start is not None and gap_run >= MIN_GAP_WIDTH:
-                segments.append((start, i - gap_run + 1))
-                start = None
+            # gap pixel
+            gap_len += 1
+            if in_segment and gap_len >= MIN_GAP_WIDTH:
+                # close current segment at i - gap_len (end of last solid)
+                segments.append((seg_start, i - gap_len + 1))
+                in_segment = False
+                gap_len = 0
 
-    if start is not None:
-        segments.append((start, n))
+    # Close a trailing segment that runs to the end.
+    if in_segment:
+        segments.append((seg_start, n))
 
-    # filter out tiny/noise segments
+    # Filter out tiny/noise segments.
     return [(s, e) for s, e in segments if (e - s) >= MIN_SEGMENT_SIZE]
 
 
@@ -260,6 +282,21 @@ def split_grid_image(image_path: Path) -> list[tuple[Path, str]]:
     else:
         # nothing worth splitting, keep the original image
         return [(image_path, "")]
+
+    # Sanity check: if any candidate segment is unreasonably narrow vs the
+    # full image, this isn't a real grid — it's a page with text columns /
+    # rows. Don't split, keep the original image intact.
+    full_extent = gray.shape[1] if horizontal else gray.shape[0]
+    for s, e in segments:
+        seg_extent = e - s
+        if seg_extent < full_extent * MIN_SEGMENT_RATIO:
+            print(
+                f"[split] {image_path.name}: rejected split "
+                f"(candidate segment {seg_extent}px is < "
+                f"{int(MIN_SEGMENT_RATIO * 100)}% of full {full_extent}px — "
+                f"likely text spacing, not a real grid gap)"
+            )
+            return [(image_path, "")]
 
     split_paths: list[tuple[Path, str]] = []
     stem = image_path.stem
