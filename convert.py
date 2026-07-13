@@ -23,6 +23,8 @@ from docling_core.types.doc import ImageRefMode
 # --------------------------------------------------------------------------
 INPUT_DIR = "input_docs"
 OUTPUT_DIR = "output_md"
+COMBINED_MD_NAME = "combined.md"           # single merged markdown output
+COMBINED_IMAGES_DIR = "all_images"          # shared image folder for the merge
 
 SUPPORTED_EXTENSIONS = (".pdf", ".pptx", ".docx")
 
@@ -48,6 +50,17 @@ def build_converter() -> DocumentConverter:
     )
 
 
+def _safe_stem(stem: str, max_len: int = 80) -> str:
+    """Trim a file stem so it can safely become a folder/filename. Linux caps
+    individual path components at 255 bytes; we cap at 80 to leave headroom
+    for suffixes like `_artifacts` and `__image_000123_abcdef_part1.png`."""
+    if len(stem) <= max_len:
+        return stem
+    # Keep the tail of the stem so the file's actual identifier is preserved
+    # rather than truncated mid-name.
+    return "x_" + stem[-max_len + 2:]
+
+
 def convert_documents(input_dir: Path, output_dir: Path, converter: DocumentConverter) -> list[Path]:
     """Converts every supported file in input_dir and saves it as markdown in output_dir.
     Returns the list of generated .md file paths."""
@@ -61,7 +74,10 @@ def convert_documents(input_dir: Path, output_dir: Path, converter: DocumentConv
         print(f"[convert] Processing {file.name} ...")
         result = converter.convert(str(file))
 
-        md_out = output_dir / f"{file.stem}.md"
+        # Use a length-safe stem to avoid Linux's 255-byte filename cap when
+        # Docling later tries to make `<stem>_artifacts/`.
+        safe = _safe_stem(file.stem)
+        md_out = output_dir / f"{safe}.md"
         result.document.save_as_markdown(md_out, image_mode=ImageRefMode.REFERENCED)
 
         print(f"[convert] ✔ {file.name} → {md_out.name}")
@@ -412,15 +428,29 @@ def split_grid_image(image_path: Path) -> list[tuple[Path, str]]:
     return split_paths
 
 
+def _is_already_split(img_file: Path) -> bool:
+    """True if this PNG is itself a part produced by a previous split pass
+    (e.g. contains `_part1`, `_part2`). Used to avoid re-splitting when the
+    per-file processing loop runs against an already-shared folder."""
+    name = img_file.stem
+    import re as _re
+    return bool(_re.search(r"_part\d+$", name))
+
+
 def process_images_dir(images_dir: Path) -> dict[str, list[tuple[Path, str]]]:
     """Checks every image in images_dir, splits it if applicable, and returns
-    a mapping: original_image_filename -> [(split_image_path, title), ...]"""
+    a mapping: original_image_filename -> [(split_image_path, title), ...]
+
+    Skips images that look like they were already split (contain `_partN`)
+    so re-runs over a shared folder don't double-process."""
     if not images_dir.exists():
         return {}
 
     mapping: dict[str, list[tuple[Path, str]]] = {}
     for img_file in sorted(images_dir.glob("*")):
         if img_file.suffix.lower() not in (".png", ".jpg", ".jpeg"):
+            continue
+        if _is_already_split(img_file):
             continue
         splits = split_grid_image(img_file)
         if len(splits) > 1:
@@ -567,6 +597,7 @@ def find_images_dir_for(md_path: Path) -> Path:
         output_dir / f"{md_path.stem}_images",
         output_dir / "output_md" / f"{md_path.stem}_artifacts",
         output_dir / "output_md" / f"{md_path.stem}_images",
+        output_dir / COMBINED_IMAGES_DIR,
     ]
     seen = set()
     for c in candidates:
@@ -578,6 +609,138 @@ def find_images_dir_for(md_path: Path) -> Path:
     return candidates[0]  # default guess, treated as empty if it doesn't exist
 
 
+def consolidate_images_for_merge(md_files: list[Path]) -> tuple[Path, dict[Path, str]]:
+    """Move every per-file `_artifacts/` folder into a single shared
+    `output_md/all_images/` folder and rewrite the image paths inside each
+    markdown file so the references still resolve.
+
+    Docling gives every input file its own `<stem>_artifacts/` folder, and
+    the image filenames inside each folder start at `image_000000` — so two
+    input files would collide on the same image number. We rename images to
+    `<source_stem>__<original_image_name>` when moving them, and rewrite the
+    `!(...)(...)` paths inside each .md accordingly.
+
+    Returns (shared_images_dir, source_md_to_combined_md_path_map).
+    """
+    import shutil
+
+    output_dir = Path(OUTPUT_DIR)
+    shared_dir = output_dir / COMBINED_IMAGES_DIR
+    shared_dir.mkdir(parents=True, exist_ok=True)
+
+    # Track which files we copied so split-image outputs (which are written
+    # later into the same per-file _artifacts/ folder) end up here too.
+    file_rewrite_map: dict[str, str] = {}  # original_md_text -> rewritten_md_text
+
+    for md_path in md_files:
+        stem = md_path.stem
+        # Find this file's artifacts directory (whatever shape Docling made).
+        images_dir = find_images_dir_for(md_path)
+        if not images_dir.exists():
+            continue
+
+        md_text = md_path.read_text(encoding="utf-8")
+        original_text = md_text
+        rel_prefix = ""
+        if "output_md/" in md_text or "output_md\\" in md_text:
+            rel_prefix = "output_md/"
+
+        # Move every file in images_dir to shared_dir, prefixing with the
+        # source file stem so two sources can't collide on the same name.
+        for img in sorted(images_dir.iterdir()):
+            if not img.is_file():
+                continue
+            if img.suffix.lower() not in (".png", ".jpg", ".jpeg", ".gif", ".webp"):
+                continue
+            new_name = f"{stem}__{img.name}"
+            dest = shared_dir / new_name
+            if dest.exists():
+                dest.unlink()
+            shutil.move(str(img), str(dest))
+            # Rewrite path references inside the markdown text. Match the
+            # file's basename only (the relative folder may vary between
+            # Docling versions, and the basename is unique after we move).
+            old_basename = img.name
+            new_basename = new_name
+            md_text = md_text.replace(
+                f"({rel_prefix}{images_dir.name}/{old_basename})",
+                f"({rel_prefix}{COMBINED_IMAGES_DIR}/{new_basename})",
+            )
+            # Also handle plain `(image_xxx.png)` references in case the
+            # markdown was rewritten somewhere without the folder prefix.
+            md_text = md_text.replace(
+                f"({old_basename})",
+                f"({rel_prefix}{COMBINED_IMAGES_DIR}/{new_basename})",
+            )
+
+        # Clean up now-empty per-file _artifacts directory and the nested
+        # output_md/ wrapper if everything got moved out.
+        try:
+            images_dir.rmdir()
+        except OSError:
+            pass
+        parent = images_dir.parent
+        # If we just emptied output_md/output_md/<stem>_artifacts and the
+        # parent is now empty, drop the nested wrapper too.
+        try:
+            parent.rmdir()
+        except OSError:
+            pass
+
+        if md_text != original_text:
+            md_path.write_text(md_text, encoding="utf-8")
+
+    return shared_dir, {}
+
+
+def merge_markdown_files(md_files: list[Path], output_path: Path) -> Path:
+    """Concatenate all per-file markdown outputs into a single combined
+    markdown file. Each source file is introduced with a clear `## Source`
+    heading so the reader can see where one document ends and the next
+    begins.
+
+    Image paths inside each per-file .md point at `output_md/all_images/...`
+    because that's where Docling saved them originally. Since the combined
+    file lives in the same `output_md/` directory, we strip the leading
+    `output_md/` from any image reference so paths resolve to `./all_images/`.
+    """
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+
+    import re as _re
+    # Match markdown image links like `(path/to/img.png)` and strip a leading
+    # `output_md/` from the path so it resolves relative to combined.md.
+    _img_link_re = _re.compile(r"(!\[[^\]]*\]\()([^)]+)(\))")
+
+    def _strip_output_md(md_text: str) -> str:
+        return _img_link_re.sub(
+            lambda m: m.group(1) + m.group(2).replace("output_md/", "") + m.group(3),
+            md_text,
+        )
+
+    parts: list[str] = []
+    parts.append(f"# Combined Document\n")
+    parts.append(
+        f"_Generated from {len(md_files)} source file(s) in `{INPUT_DIR}`._\n"
+    )
+
+    for idx, md_path in enumerate(md_files):
+        if not md_path.exists():
+            continue
+        text = _strip_output_md(md_path.read_text(encoding="utf-8")).strip()
+        if not text:
+            continue
+        parts.append("")
+        parts.append(f"---\n")
+        parts.append(f"## Source {idx + 1}: `{md_path.name}`\n")
+        parts.append("")
+        parts.append(text)
+        parts.append("")
+
+    output_path.write_text("\n".join(parts), encoding="utf-8")
+    print(f"[merge] {output_path.name} written ({len(md_files)} source(s))")
+    return output_path
+
+
 # --------------------------------------------------------------------------
 # MAIN PIPELINE
 # --------------------------------------------------------------------------
@@ -585,7 +748,8 @@ def main():
     input_dir = Path(INPUT_DIR)
     output_dir = Path(OUTPUT_DIR)
 
-    # Fresh start: remove any prior markdown outputs so each run begins clean.
+    # Fresh start: remove any prior markdown outputs and image folders so each
+    # run begins clean.
     if output_dir.exists():
         for old_md in output_dir.glob("*.md"):
             old_md.unlink()
@@ -597,15 +761,30 @@ def main():
                         shutil.rmtree(child)
                     else:
                         child.unlink()
+        shared = output_dir / COMBINED_IMAGES_DIR
+        if shared.exists():
+            import shutil
+            shutil.rmtree(shared)
 
     converter = build_converter()
     md_files = convert_documents(input_dir, output_dir, converter)
+
+    # Move every per-file _artifacts/ into one shared folder and rewrite
+    # image references in each .md to point at it. Doing this BEFORE splitting
+    # means each source file contributes its own copy of the original image
+    # to the shared pool, so all subsequent operations see the right files.
+    consolidate_images_for_merge(md_files)
 
     for md_path in md_files:
         images_dir = find_images_dir_for(md_path)
         split_mapping = process_images_dir(images_dir)
         update_markdown_with_splits(md_path, split_mapping)
         strip_code_blocks_near_images(md_path)
+
+    # Stitch every per-file .md into one combined.md.
+    if md_files:
+        combined_path = output_dir / COMBINED_MD_NAME
+        merge_markdown_files(md_files, combined_path)
 
     print("\n✔ All done. Check the output_md/ folder.")
 

@@ -8,8 +8,8 @@ import cv2 import numpy as np import matplotlib.pyplot as plt image_path�
 
 ## Original Grayscale Image
 
-**image_000000_18bf7451bd2650cc0b63c7659d15ae4f1b381866c7f785ab98fcd22ee146f8bf.png**
-![Image](output_md/dip1_artifacts/image_000000_18bf7451bd2650cc0b63c7659d15ae4f1b381866c7f785ab98fcd22ee146f8bf.png)
+**dip1__image_000000_18bf7451bd2650cc0b63c7659d15ae4f1b381866c7f785ab98fcd22ee146f8bf.png**
+![Image](output_md/all_images/dip1__image_000000_18bf7451bd2650cc0b63c7659d15ae4f1b381866c7f785ab98fcd22ee146f8bf.png)
 
 Setup complete: Image loaded and converted to grayscale.
 
@@ -34,14 +34,14 @@ GAUSSIAN_KSIZE = 5 SIGMA = 1.0 LOW_THRESHOLD = 30 HIGH_THRESHOLD = 90 so
 ```
 
 **Canny with Sobel Filter**
-**image_000001_6b2a2aecf78dafd441f3adf18a857fa49a80e7232d98a4f09bda07851334f781_part1.png**
-![Canny with Sobel Filter](output_md/dip1_artifacts/image_000001_6b2a2aecf78dafd441f3adf18a857fa49a80e7232d98a4f09bda07851334f781_part1.png)
+**dip1__image_000001_6b2a2aecf78dafd441f3adf18a857fa49a80e7232d98a4f09bda07851334f781_part1.png**
+![Canny with Sobel Filter](output_md/all_images/dip1__image_000001_6b2a2aecf78dafd441f3adf18a857fa49a80e7232d98a4f09bda07851334f781_part1.png)
 **Canny with Prewitt Filter**
-**image_000001_6b2a2aecf78dafd441f3adf18a857fa49a80e7232d98a4f09bda07851334f781_part2.png**
-![Canny with Prewitt Filter](output_md/dip1_artifacts/image_000001_6b2a2aecf78dafd441f3adf18a857fa49a80e7232d98a4f09bda07851334f781_part2.png)
+**dip1__image_000001_6b2a2aecf78dafd441f3adf18a857fa49a80e7232d98a4f09bda07851334f781_part2.png**
+![Canny with Prewitt Filter](output_md/all_images/dip1__image_000001_6b2a2aecf78dafd441f3adf18a857fa49a80e7232d98a4f09bda07851334f781_part2.png)
 **Canny with Roberts Cross Filter**
-**image_000001_6b2a2aecf78dafd441f3adf18a857fa49a80e7232d98a4f09bda07851334f781_part3.png**
-![Canny with Roberts Cross Filter](output_md/dip1_artifacts/image_000001_6b2a2aecf78dafd441f3adf18a857fa49a80e7232d98a4f09bda07851334f781_part3.png)
+**dip1__image_000001_6b2a2aecf78dafd441f3adf18a857fa49a80e7232d98a4f09bda07851334f781_part3.png**
+![Canny with Roberts Cross Filter](output_md/all_images/dip1__image_000001_6b2a2aecf78dafd441f3adf18a857fa49a80e7232d98a4f09bda07851334f781_part3.png)
 
 ## Comparison Summary of Gradient Filters:
 
@@ -68,14 +68,14 @@ FIXED_LOW_THRESHOLD = 30 FIXED_HIGH_THRESHOLD = 90 kernel_sizes = [3, 5,�
 ```
 
 **Kernel Size: 3x3**
-**image_000002_88f56ae1b1c542bdc2f7dfcfa596deedff49ecb868129a11429e95b78d4f7b82_part1.png**
-![Kernel Size: 3x3](output_md/dip1_artifacts/image_000002_88f56ae1b1c542bdc2f7dfcfa596deedff49ecb868129a11429e95b78d4f7b82_part1.png)
+**dip1__image_000002_88f56ae1b1c542bdc2f7dfcfa596deedff49ecb868129a11429e95b78d4f7b82_part1.png**
+![Kernel Size: 3x3](output_md/all_images/dip1__image_000002_88f56ae1b1c542bdc2f7dfcfa596deedff49ecb868129a11429e95b78d4f7b82_part1.png)
 **Kernel Size: 5x5**
-**image_000002_88f56ae1b1c542bdc2f7dfcfa596deedff49ecb868129a11429e95b78d4f7b82_part2.png**
-![Kernel Size: 5x5](output_md/dip1_artifacts/image_000002_88f56ae1b1c542bdc2f7dfcfa596deedff49ecb868129a11429e95b78d4f7b82_part2.png)
+**dip1__image_000002_88f56ae1b1c542bdc2f7dfcfa596deedff49ecb868129a11429e95b78d4f7b82_part2.png**
+![Kernel Size: 5x5](output_md/all_images/dip1__image_000002_88f56ae1b1c542bdc2f7dfcfa596deedff49ecb868129a11429e95b78d4f7b82_part2.png)
 **Kernel Size: 7x7**
-**image_000002_88f56ae1b1c542bdc2f7dfcfa596deedff49ecb868129a11429e95b78d4f7b82_part3.png**
-![Kernel Size: 7x7](output_md/dip1_artifacts/image_000002_88f56ae1b1c542bdc2f7dfcfa596deedff49ecb868129a11429e95b78d4f7b82_part3.png)
+**dip1__image_000002_88f56ae1b1c542bdc2f7dfcfa596deedff49ecb868129a11429e95b78d4f7b82_part3.png**
+![Kernel Size: 7x7](output_md/all_images/dip1__image_000002_88f56ae1b1c542bdc2f7dfcfa596deedff49ecb868129a11429e95b78d4f7b82_part3.png)
 
 ## Sigma Value Tuning 
 
@@ -86,14 +86,14 @@ BEST_KSIZE_FOR_SIGMA_TUNING = 5 sigma_values = [0.5, 1.0, 1.5] edges_sigma
 ```
 
 **Sigma: 0.5**
-**image_000003_1b2f0ecbd658fe2501663cad87e9b1d7f5a468eff25ff8376c0c2ad447a07d1c_part1.png**
-![Sigma: 0.5](output_md/dip1_artifacts/image_000003_1b2f0ecbd658fe2501663cad87e9b1d7f5a468eff25ff8376c0c2ad447a07d1c_part1.png)
+**dip1__image_000003_1b2f0ecbd658fe2501663cad87e9b1d7f5a468eff25ff8376c0c2ad447a07d1c_part1.png**
+![Sigma: 0.5](output_md/all_images/dip1__image_000003_1b2f0ecbd658fe2501663cad87e9b1d7f5a468eff25ff8376c0c2ad447a07d1c_part1.png)
 **Sigma: 1.0**
-**image_000003_1b2f0ecbd658fe2501663cad87e9b1d7f5a468eff25ff8376c0c2ad447a07d1c_part2.png**
-![Sigma: 1.0](output_md/dip1_artifacts/image_000003_1b2f0ecbd658fe2501663cad87e9b1d7f5a468eff25ff8376c0c2ad447a07d1c_part2.png)
+**dip1__image_000003_1b2f0ecbd658fe2501663cad87e9b1d7f5a468eff25ff8376c0c2ad447a07d1c_part2.png**
+![Sigma: 1.0](output_md/all_images/dip1__image_000003_1b2f0ecbd658fe2501663cad87e9b1d7f5a468eff25ff8376c0c2ad447a07d1c_part2.png)
 **Sigma: 1.5**
-**image_000003_1b2f0ecbd658fe2501663cad87e9b1d7f5a468eff25ff8376c0c2ad447a07d1c_part3.png**
-![Sigma: 1.5](output_md/dip1_artifacts/image_000003_1b2f0ecbd658fe2501663cad87e9b1d7f5a468eff25ff8376c0c2ad447a07d1c_part3.png)
+**dip1__image_000003_1b2f0ecbd658fe2501663cad87e9b1d7f5a468eff25ff8376c0c2ad447a07d1c_part3.png**
+![Sigma: 1.5](output_md/all_images/dip1__image_000003_1b2f0ecbd658fe2501663cad87e9b1d7f5a468eff25ff8376c0c2ad447a07d1c_part3.png)
 
 ## Threshold Pair Tuning 
 
@@ -104,14 +104,14 @@ BEST_KSIZE_FOR_THRESHOLD_TUNING = 5 BEST_SIGMA_FOR_THRESHOLD_TUNING = 1.0 th
 ```
 
 **Thresholds: (0.03, 0.09)**
-**image_000004_2e625d801c33b7155ee659cab4e48241db57b559175f46f7d5808fadbe992aa6_part1.png**
-![Thresholds: (0.03, 0.09)](output_md/dip1_artifacts/image_000004_2e625d801c33b7155ee659cab4e48241db57b559175f46f7d5808fadbe992aa6_part1.png)
+**dip1__image_000004_2e625d801c33b7155ee659cab4e48241db57b559175f46f7d5808fadbe992aa6_part1.png**
+![Thresholds: (0.03, 0.09)](output_md/all_images/dip1__image_000004_2e625d801c33b7155ee659cab4e48241db57b559175f46f7d5808fadbe992aa6_part1.png)
 **Thresholds: (0.05, 0.11)**
-**image_000004_2e625d801c33b7155ee659cab4e48241db57b559175f46f7d5808fadbe992aa6_part2.png**
-![Thresholds: (0.05, 0.11)](output_md/dip1_artifacts/image_000004_2e625d801c33b7155ee659cab4e48241db57b559175f46f7d5808fadbe992aa6_part2.png)
+**dip1__image_000004_2e625d801c33b7155ee659cab4e48241db57b559175f46f7d5808fadbe992aa6_part2.png**
+![Thresholds: (0.05, 0.11)](output_md/all_images/dip1__image_000004_2e625d801c33b7155ee659cab4e48241db57b559175f46f7d5808fadbe992aa6_part2.png)
 **Thresholds: (0.08, 0.16)**
-**image_000004_2e625d801c33b7155ee659cab4e48241db57b559175f46f7d5808fadbe992aa6_part3.png**
-![Thresholds: (0.08, 0.16)](output_md/dip1_artifacts/image_000004_2e625d801c33b7155ee659cab4e48241db57b559175f46f7d5808fadbe992aa6_part3.png)
+**dip1__image_000004_2e625d801c33b7155ee659cab4e48241db57b559175f46f7d5808fadbe992aa6_part3.png**
+![Thresholds: (0.08, 0.16)](output_md/all_images/dip1__image_000004_2e625d801c33b7155ee659cab4e48241db57b559175f46f7d5808fadbe992aa6_part3.png)
 
 ## Final Optimized Edge Map 
 
@@ -129,5 +129,5 @@ High Threshold: 28 (relative ~0.11)
 
 Final Best Edge Map (Optimum Parameters)
 
-**image_000005_6e5b120aad826372e366096ae820fe295881cdcbdc3edaaa6994a5b6a66fd306.png**
-![Image](output_md/dip1_artifacts/image_000005_6e5b120aad826372e366096ae820fe295881cdcbdc3edaaa6994a5b6a66fd306.png)
+**dip1__image_000005_6e5b120aad826372e366096ae820fe295881cdcbdc3edaaa6994a5b6a66fd306.png**
+![Image](output_md/all_images/dip1__image_000005_6e5b120aad826372e366096ae820fe295881cdcbdc3edaaa6994a5b6a66fd306.png)
