@@ -30,11 +30,11 @@ def double_threshold_hysteresis(image, low_threshold, high_threshold): image�
 The Canny edge detection algorithm is applied using three distinct gradient filters: Sobel, Prewitt, and Roberts Cross. To ensure a fair comparison, Gaussian kernel size, sigma, and threshold values are maintained constant across all three filters.
 
 **image_000001_6b2a2aecf78dafd441f3adf18a857fa49a80e7232d98a4f09bda07851334f781_part1.png**
-![Canny with Sobel Filter](output_md/dip1_artifacts/image_000001_6b2a2aecf78dafd441f3adf18a857fa49a80e7232d98a4f09bda07851334f781_part1.png)
+![Part 1](output_md/dip1_artifacts/image_000001_6b2a2aecf78dafd441f3adf18a857fa49a80e7232d98a4f09bda07851334f781_part1.png)
 **image_000001_6b2a2aecf78dafd441f3adf18a857fa49a80e7232d98a4f09bda07851334f781_part2.png**
-![Canny with Prewitt Filter](output_md/dip1_artifacts/image_000001_6b2a2aecf78dafd441f3adf18a857fa49a80e7232d98a4f09bda07851334f781_part2.png)
+![Part 2](output_md/dip1_artifacts/image_000001_6b2a2aecf78dafd441f3adf18a857fa49a80e7232d98a4f09bda07851334f781_part2.png)
 **image_000001_6b2a2aecf78dafd441f3adf18a857fa49a80e7232d98a4f09bda07851334f781_part3.png**
-![Canny with Roberts Cross Filter](output_md/dip1_artifacts/image_000001_6b2a2aecf78dafd441f3adf18a857fa49a80e7232d98a4f09bda07851334f781_part3.png)
+![Part 3](output_md/dip1_artifacts/image_000001_6b2a2aecf78dafd441f3adf18a857fa49a80e7232d98a4f09bda07851334f781_part3.png)
 
 ## Comparison Summary of Gradient Filters:
 
@@ -57,33 +57,33 @@ BEST_FILTER = 'sobel' FIXED_SIGMA = 1.0
 ```
 
 **image_000002_88f56ae1b1c542bdc2f7dfcfa596deedff49ecb868129a11429e95b78d4f7b82_part1.png**
-![Kernel Size: 3x3](output_md/dip1_artifacts/image_000002_88f56ae1b1c542bdc2f7dfcfa596deedff49ecb868129a11429e95b78d4f7b82_part1.png)
+![Part 1](output_md/dip1_artifacts/image_000002_88f56ae1b1c542bdc2f7dfcfa596deedff49ecb868129a11429e95b78d4f7b82_part1.png)
 **image_000002_88f56ae1b1c542bdc2f7dfcfa596deedff49ecb868129a11429e95b78d4f7b82_part2.png**
-![Kernel Size: 5x5](output_md/dip1_artifacts/image_000002_88f56ae1b1c542bdc2f7dfcfa596deedff49ecb868129a11429e95b78d4f7b82_part2.png)
+![Part 2](output_md/dip1_artifacts/image_000002_88f56ae1b1c542bdc2f7dfcfa596deedff49ecb868129a11429e95b78d4f7b82_part2.png)
 **image_000002_88f56ae1b1c542bdc2f7dfcfa596deedff49ecb868129a11429e95b78d4f7b82_part3.png**
-![Kernel Size: 7x7](output_md/dip1_artifacts/image_000002_88f56ae1b1c542bdc2f7dfcfa596deedff49ecb868129a11429e95b78d4f7b82_part3.png)
+![Part 3](output_md/dip1_artifacts/image_000002_88f56ae1b1c542bdc2f7dfcfa596deedff49ecb868129a11429e95b78d4f7b82_part3.png)
 
 ## Sigma Value Tuning 
 
 The impact of the sigma value (standard deviation of the Gaussian blur) on edge detection is investigated. A kernel size of 5x5 (selected from previous experiments for its balanced performance) is used, with fixed thresholds. Sigma values of 0.5, 1.0, and 1.5 are evaluated.
 
 **image_000003_1b2f0ecbd658fe2501663cad87e9b1d7f5a468eff25ff8376c0c2ad447a07d1c_part1.png**
-![Sigma: 0.5](output_md/dip1_artifacts/image_000003_1b2f0ecbd658fe2501663cad87e9b1d7f5a468eff25ff8376c0c2ad447a07d1c_part1.png)
+![Part 1](output_md/dip1_artifacts/image_000003_1b2f0ecbd658fe2501663cad87e9b1d7f5a468eff25ff8376c0c2ad447a07d1c_part1.png)
 **image_000003_1b2f0ecbd658fe2501663cad87e9b1d7f5a468eff25ff8376c0c2ad447a07d1c_part2.png**
-![Sigma: 1.0](output_md/dip1_artifacts/image_000003_1b2f0ecbd658fe2501663cad87e9b1d7f5a468eff25ff8376c0c2ad447a07d1c_part2.png)
+![Part 2](output_md/dip1_artifacts/image_000003_1b2f0ecbd658fe2501663cad87e9b1d7f5a468eff25ff8376c0c2ad447a07d1c_part2.png)
 **image_000003_1b2f0ecbd658fe2501663cad87e9b1d7f5a468eff25ff8376c0c2ad447a07d1c_part3.png**
-![Sigma: 1.5](output_md/dip1_artifacts/image_000003_1b2f0ecbd658fe2501663cad87e9b1d7f5a468eff25ff8376c0c2ad447a07d1c_part3.png)
+![Part 3](output_md/dip1_artifacts/image_000003_1b2f0ecbd658fe2501663cad87e9b1d7f5a468eff25ff8376c0c2ad447a07d1c_part3.png)
 
 ## Threshold Pair Tuning 
 
 This section explores the effect of varying low\_threshold and high\_threshold values, which are critical for determining strong and weak edges. The previously identified optimal kernel\_size and sigma values are maintained. Threshold pairs (0.03, 0.09), (0.05, 0.11), and (0.08, 0.16) are tested. Note that the custom Canny functions expect thresholds in the 0-255 range, necessitating scaling of the provided 0-1 range values.
 
 **image_000004_2e625d801c33b7155ee659cab4e48241db57b559175f46f7d5808fadbe992aa6_part1.png**
-![Thresholds: (0.03, 0.09) S)](output_md/dip1_artifacts/image_000004_2e625d801c33b7155ee659cab4e48241db57b559175f46f7d5808fadbe992aa6_part1.png)
+![Part 1](output_md/dip1_artifacts/image_000004_2e625d801c33b7155ee659cab4e48241db57b559175f46f7d5808fadbe992aa6_part1.png)
 **image_000004_2e625d801c33b7155ee659cab4e48241db57b559175f46f7d5808fadbe992aa6_part2.png**
-![Thresholds: (0.05, 0.11)](output_md/dip1_artifacts/image_000004_2e625d801c33b7155ee659cab4e48241db57b559175f46f7d5808fadbe992aa6_part2.png)
+![Part 2](output_md/dip1_artifacts/image_000004_2e625d801c33b7155ee659cab4e48241db57b559175f46f7d5808fadbe992aa6_part2.png)
 **image_000004_2e625d801c33b7155ee659cab4e48241db57b559175f46f7d5808fadbe992aa6_part3.png**
-![Thresholds: (0.08, 0.16)](output_md/dip1_artifacts/image_000004_2e625d801c33b7155ee659cab4e48241db57b559175f46f7d5808fadbe992aa6_part3.png)
+![Part 3](output_md/dip1_artifacts/image_000004_2e625d801c33b7155ee659cab4e48241db57b559175f46f7d5808fadbe992aa6_part3.png)
 
 ## Final Optimized Edge Map 
 

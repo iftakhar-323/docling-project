@@ -263,15 +263,41 @@ def split_grid_image(image_path: Path) -> list[tuple[Path, str]]:
             cropped = img.crop((0, a0, img.width, a1))
 
         # Trim out any stray title/OCR text that bleeds into the part. The
-        # per-subplot title sits just above the dense content (within ~12 px),
-        # so a small top pad keeps it visible while cutting off the suptitle
-        # and OCR print() output that sits well above the first dense block.
+        # per-subplot title (when present in the image) sits RIGHT against the
+        # top of the dense content, so a small top pad keeps it while dropping
+        # any suptitle/OCR text rows that appear above it. We also remove
+        # any text band detected just above the dense content.
         cropped_gray = np.array(cropped.convert("L"))
         y0, y1 = _trim_content_rows(cropped_gray)
-        title_pad = 12  # enough for per-subplot title text, drops suptitle
-        y0_padded = max(0, y0 - title_pad)
-        if y1 - y0_padded > 20:
-            cropped = cropped.crop((0, y0_padded, cropped.width, y1))
+
+        # Look for any text band (sparse dark rows) sitting between (y0 - 30)
+        # and y0. If found, trim everything above the start of that band.
+        dark_mask = cropped_gray < (WHITE_THRESHOLD - 60)
+        h_local, w_local = cropped_gray.shape
+        row_density = dark_mask.sum(axis=1) / max(1, w_local)
+
+        # Find the topmost dense row (y0) and check rows just above it for any
+        # text-like content. If rows just above are sparse text, drop them.
+        scan_top = max(0, y0 - 40)
+        text_band_start = scan_top
+        for y in range(scan_top, y0):
+            if 0.03 < row_density[y] < 0.30:
+                text_band_start = y
+            elif row_density[y] == 0.0:
+                continue
+            else:
+                # Either dense or blank — stop scanning up.
+                break
+        # Keep tiny top padding only if there's text immediately above content
+        # (i.e. the per-subplot title).
+        if text_band_start < y0 and row_density[text_band_start:y0].mean() > 0.05:
+            # Per-subplot title present — keep a few px of it.
+            keep_top = max(text_band_start, y0 - 6)
+        else:
+            keep_top = y0
+
+        if y1 - keep_top > 20:
+            cropped = cropped.crop((0, keep_top, cropped.width, y1))
 
         # Add a small top margin to keep the subplot title visible.
         cw, ch = cropped.size
