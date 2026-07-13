@@ -3,9 +3,5 @@ __pycache__/
 *.pyc
 .env
 
-# Generated artifacts (images from conversions)
-output_md/all_images/
-output_md/output_md/
-
-# Inputs (large binary originals)
+# Inputs (large binary originals) — keep them out of the repo
 input_docs/
