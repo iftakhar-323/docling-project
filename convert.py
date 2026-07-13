@@ -5,6 +5,10 @@ PDF/PPTX/DOCX -> Markdown converter (Docling based)
 - Combined grid images (e.g. "3 subplots merged into one image") are automatically
   split into separate images, if there is a clear whitespace gap between subplots
 - The markdown file is updated so each split image is referenced on its own line
+- NEW: Every image (split or not) is also run through full-page OCR (RapidOCR),
+  and the extracted text is written into the markdown directly below the image,
+  so handwritten / printed text inside images becomes real, searchable text —
+  not just an embedded picture.
 """
 
 from pathlib import Path
@@ -36,6 +40,10 @@ MIN_SEGMENT_SIZE = 120      # segments smaller than this are discarded as noise
 # narrow vs the full image, we reject the whole split (it's almost certainly
 # a page with text columns, not a grid of subplots).
 MIN_SEGMENT_RATIO = 0.18    # smallest segment must be >= this fraction of full width/height
+
+# Full-image OCR tuning
+OCR_MIN_CONFIDENCE = 0.0    # RapidOCR score threshold below which a line is dropped
+                             # (set to e.g. 0.3 if you see too much garbage text)
 
 
 # --------------------------------------------------------------------------
@@ -169,6 +177,81 @@ def _trim_content_rows(gray: np.ndarray) -> tuple[int, int]:
     return int(start_y), int(end_y)
 
 
+# --------------------------------------------------------------------------
+# NEW: Full-image OCR (extracts ALL text in an image, not just a title band)
+# --------------------------------------------------------------------------
+_OCR_ENGINE = None  # lazy singleton so we only construct RapidOCR once
+
+
+def _get_ocr_engine():
+    """Returns a cached RapidOCR engine instance, or None if unavailable."""
+    global _OCR_ENGINE
+    if _OCR_ENGINE is None:
+        try:
+            from rapidocr import RapidOCR  # type: ignore
+            _OCR_ENGINE = RapidOCR()
+        except Exception as e:
+            print(f"[ocr] RapidOCR unavailable ({e}); full-image OCR will be skipped.")
+            _OCR_ENGINE = False  # sentinel: "tried and failed", don't retry
+    return _OCR_ENGINE or None
+
+
+def extract_full_text_from_image(image_path: Path) -> str:
+    """Runs OCR over the ENTIRE image (not just a title band) and returns the
+    recognized text as multi-line plain text, ordered top-to-bottom / left-to-
+    right the way RapidOCR naturally returns boxes (reading order).
+
+    Used so that handwritten/printed content inside an image (e.g. a scanned
+    notebook page) is also captured as real, searchable text in the markdown,
+    in addition to the embedded image itself.
+
+    Returns "" if OCR is unavailable or finds no text.
+    """
+    engine = _get_ocr_engine()
+    if engine is None:
+        return ""
+
+    try:
+        img = Image.open(image_path).convert("RGB")
+        result = engine(img)
+    except Exception as e:
+        print(f"[ocr] failed on {image_path.name}: {e}")
+        return ""
+
+    boxes = getattr(result, "boxes", None)
+    txts = getattr(result, "txts", None) or []
+    scores = getattr(result, "scores", None) or []
+
+    if not txts:
+        return ""
+
+    # Pair up (text, score, box) so we can sort into natural reading order
+    # (top-to-bottom by the box's mean y-coordinate) even if the engine
+    # returns detections out of order.
+    items = []
+    for i, t in enumerate(txts):
+        t = (t or "").strip()
+        if not t:
+            continue
+        score = scores[i] if i < len(scores) else 1.0
+        if score is not None and score < OCR_MIN_CONFIDENCE:
+            continue
+        y = 0.0
+        if boxes is not None and i < len(boxes):
+            try:
+                pts = boxes[i]
+                y = float(sum(p[1] for p in pts) / len(pts))
+            except Exception:
+                y = float(i)  # fall back to detection order
+        else:
+            y = float(i)
+        items.append((y, t))
+
+    items.sort(key=lambda x: x[0])
+    lines = [t for _, t in items]
+    return "\n".join(lines).strip()
+
+
 def _find_subplot_titles(img: Image.Image, segments: list[tuple[int, int]],
                           horizontal: bool) -> list[str]:
     """Best-effort: read the title text near the top of each subplot using
@@ -176,10 +259,8 @@ def _find_subplot_titles(img: Image.Image, segments: list[tuple[int, int]],
     fails or returns no text."""
     titles: list[str] = []
     w, h = img.size
-    try:
-        from rapidocr import RapidOCR  # type: ignore
-        engine = RapidOCR()
-    except Exception:
+    engine = _get_ocr_engine()
+    if engine is None:
         return [f"Part {i + 1}" for i in range(len(segments))]
 
     for i, (a0, a1) in enumerate(segments):
@@ -303,11 +384,7 @@ def split_grid_image(image_path: Path) -> list[tuple[Path, str]]:
     suffix = image_path.suffix
 
     # Lazy import — only when we actually need to OCR titles.
-    try:
-        from rapidocr import RapidOCR  # type: ignore
-        engine = RapidOCR()
-    except Exception:
-        engine = None
+    engine = _get_ocr_engine()
 
     # Pre-OCR the per-subplot title for each segment by reading the title band
     # from the ORIGINAL (untrimmed) image at the segment's column range. We do
@@ -499,7 +576,7 @@ def process_images_dir(images_dir: Path) -> dict[str, list[tuple[Path, str]]]:
 # --------------------------------------------------------------------------
 # STEP 3: Update the markdown file so each image line is preceded by the
 #         image filename as a caption, and split images appear on their
-#         own lines.
+#         own lines. Each image is now ALSO followed by its full OCR'd text.
 # --------------------------------------------------------------------------
 def _format_image_block(prefix: str, sp: Path, title: str, idx: int) -> list[str]:
     """Returns the markdown lines for one split part:
@@ -508,6 +585,9 @@ def _format_image_block(prefix: str, sp: Path, title: str, idx: int) -> list[str
     - The filename line stays as a caption below the title (or above if no
       title was detected).
     - The image line keeps the title in the alt-text for accessibility.
+    - NEW: below the image, the full OCR'd text content of that image part is
+      inserted inside a fenced block, so all handwritten/printed text in the
+      image is also present as real, copyable text.
     """
     name = sp.name
     label = title or f"Part {idx}"
@@ -516,16 +596,27 @@ def _format_image_block(prefix: str, sp: Path, title: str, idx: int) -> list[str
         lines.append(f"**{title}**")
     lines.append(f"**{name}**")
     lines.append(f"![{label}]({prefix}{name})")
+
+    extracted = extract_full_text_from_image(sp)
+    if extracted:
+        lines.append("")
+        lines.append("_Extracted text:_")
+        lines.append("```text")
+        lines.append(extracted)
+        lines.append("```")
+
     return lines
 
 
 def update_markdown_with_splits(md_path: Path, split_mapping: dict[str, list[tuple[Path, str]]]) -> None:
     """For every image referenced in the markdown:
     - If it was split into parts, replace the single line with one block per
-      part (each block = caption line + image line).
-    - Otherwise, prepend a caption line (the image filename) above the line.
-    This ensures each image has its filename visible as text above it, while
-    the image itself stays free of in-image text artefacts.
+      part (each block = caption line + image line + extracted OCR text).
+    - Otherwise, prepend a caption line (the image filename) above the line,
+      and append the image's full OCR'd text below it.
+    This ensures each image has its filename visible as text above it, the
+    image itself stays free of in-image text artefacts, and the actual
+    handwritten/printed content is captured as real markdown text.
     """
     content = md_path.read_text(encoding="utf-8")
     new_lines: list[str] = []
@@ -548,20 +639,40 @@ def update_markdown_with_splits(md_path: Path, split_mapping: dict[str, list[tup
                     new_lines.extend(_format_image_block(prefix, sp, title, i))
                 replaced = True
             elif image_filename:
-                # Non-split image: prepend caption line with the filename.
+                # Non-split image: prepend caption line with the filename,
+                # keep the original image line, then append its full OCR text.
                 new_lines.append(f"**{image_filename}**")
+                new_lines.append(line)
+
+                # Resolve the actual file on disk so we can OCR it. `inside`
+                # is the path as written in the markdown (relative to the
+                # markdown file's own directory).
+                img_on_disk = (md_path.parent / inside).resolve() if inside else None
+                extracted = ""
+                if img_on_disk and img_on_disk.exists():
+                    extracted = extract_full_text_from_image(img_on_disk)
+                if extracted:
+                    new_lines.append("")
+                    new_lines.append("_Extracted text:_")
+                    new_lines.append("```text")
+                    new_lines.append(extracted)
+                    new_lines.append("```")
+                replaced = True
         if not replaced:
             new_lines.append(line)
 
     md_path.write_text("\n".join(new_lines) + "\n", encoding="utf-8")
-    print(f"[markdown] {md_path.name} updated with image captions")
+    print(f"[markdown] {md_path.name} updated with image captions + extracted text")
 
 
 def strip_code_blocks_near_images(md_path: Path) -> None:
     """Removes OCR'd ```code blocks``` that sit just before a caption line
     (e.g. ````...```` immediately followed by blank line and our inserted
     `**filename.png**` caption). Leaves real prose intact — only fenced code
-    blocks are removed, never paragraph text."""
+    blocks are removed, never paragraph text. Does NOT touch the
+    `_Extracted text:_` ```text``` blocks we add ourselves (those are always
+    preceded by an image line, not a caption line, so they're never matched
+    by the backward-scan below)."""
     content = md_path.read_text(encoding="utf-8")
     lines = content.splitlines()
 
