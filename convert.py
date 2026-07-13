@@ -27,8 +27,8 @@ OUTPUT_DIR = "output_md"
 SUPPORTED_EXTENSIONS = (".pdf", ".pptx", ".docx")
 
 # Grid-splitting tuning (adjust these if splitting doesn't work well)
-WHITE_THRESHOLD = 245       # column mean brightness above this is considered "white"
-MIN_GAP_WIDTH = 6           # a white gap narrower than this is ignored (avoids noise)
+WHITE_THRESHOLD = 235       # column/row mean brightness above this is considered a gap
+MIN_GAP_WIDTH = 5           # a gap narrower than this is ignored (avoids noise)
 MIN_SEGMENT_SIZE = 40       # segments smaller than this are discarded as noise
 
 
@@ -108,20 +108,34 @@ def _segments_from_gap_mask(gap_mask: np.ndarray) -> list[tuple[int, int]]:
 
 def split_grid_image(image_path: Path) -> list[Path]:
     """
-    Splits a combined grid image (e.g. 3 subplots side by side) into separate
-    image files, if there is a clear whitespace gap between the subplots.
+    Splits a combined grid image (e.g. 3 subplots side by side or stacked
+    vertically) into separate image files, if there is a clear whitespace gap
+    between the subplots.
 
-    Returns the list of split image paths (ordered left-to-right).
-    If splitting isn't possible (only 1 segment found), returns the original
-    image_path wrapped in a list.
+    Returns the list of split image paths (ordered by direction). If splitting
+    isn't possible (only 1 segment found in either direction), returns the
+    original image_path wrapped in a list.
     """
     img = Image.open(image_path).convert("RGB")
     gray = np.array(img.convert("L"))
 
+    # Try horizontal (column) splits first.
     col_gap_mask = _find_gap_columns(gray)
     col_segments = _segments_from_gap_mask(col_gap_mask)
 
-    if len(col_segments) <= 1:
+    # Try vertical (row) splits as well.
+    row_means = gray.mean(axis=1)
+    row_gap_mask = row_means > WHITE_THRESHOLD
+    row_segments = _segments_from_gap_mask(row_gap_mask)
+
+    # Pick whichever gives more segments (more useful for grid images).
+    if len(col_segments) >= len(row_segments) and len(col_segments) > 1:
+        segments = col_segments
+        horizontal = True
+    elif len(row_segments) > 1:
+        segments = row_segments
+        horizontal = False
+    else:
         # nothing worth splitting, keep the original image
         return [image_path]
 
@@ -129,13 +143,17 @@ def split_grid_image(image_path: Path) -> list[Path]:
     stem = image_path.stem
     suffix = image_path.suffix
 
-    for idx, (x0, x1) in enumerate(col_segments, start=1):
-        cropped = img.crop((x0, 0, x1, img.height))
+    for idx, (a0, a1) in enumerate(segments, start=1):
+        if horizontal:
+            cropped = img.crop((a0, 0, a1, img.height))
+        else:
+            cropped = img.crop((0, a0, img.width, a1))
         out_path = image_path.with_name(f"{stem}_part{idx}{suffix}")
         cropped.save(out_path)
         split_paths.append(out_path)
 
-    print(f"[split] {image_path.name} → split into {len(split_paths)} separate images")
+    direction = "horizontally" if horizontal else "vertically"
+    print(f"[split] {image_path.name} → split {direction} into {len(split_paths)} separate images")
     return split_paths
 
 
@@ -167,17 +185,21 @@ def update_markdown_with_splits(md_path: Path, split_mapping: dict[str, list[Pat
         return
 
     content = md_path.read_text(encoding="utf-8")
-    lines = content.splitlines()
-    new_lines = []
 
-    for line in lines:
+    new_lines = []
+    for line in content.splitlines():
         replaced = False
         for original_name, split_paths in split_mapping.items():
             if original_name in line and line.strip().startswith("!["):
-                # replace the original image line with one line per split image
+                # Preserve whatever directory prefix was used in the original
+                # reference (e.g. "output_md/dip1_artifacts/").
+                prefix = ""
+                if "(" in line and ")" in line:
+                    inside = line.split("(", 1)[1].rsplit(")", 1)[0]
+                    if "/" in inside:
+                        prefix = inside.rsplit("/", 1)[0] + "/"
                 for i, sp in enumerate(split_paths, start=1):
-                    rel_path = f"{sp.parent.name}/{sp.name}"
-                    new_lines.append(f"![Part {i}]({rel_path})")
+                    new_lines.append(f"![Part {i}]({prefix}{sp.name})")
                 replaced = True
                 break
         if not replaced:
@@ -258,12 +280,24 @@ def strip_code_blocks_near_images(md_path: Path) -> None:
 
 
 def find_images_dir_for(md_path: Path) -> Path:
-    """Docling usually stores images in a '<stem>_artifacts' or similar folder."""
+    """Docling usually stores images in a '<stem>_artifacts' or similar folder.
+    Searches both the markdown's parent directory and a nested OUTPUT_DIR sub-
+    directory (some Docling versions nest artifacts under output_md/output_md/).
+    """
+    output_dir = Path(OUTPUT_DIR)
     candidates = [
         md_path.parent / f"{md_path.stem}_artifacts",
         md_path.parent / f"{md_path.stem}_images",
+        output_dir / f"{md_path.stem}_artifacts",
+        output_dir / f"{md_path.stem}_images",
+        output_dir / "output_md" / f"{md_path.stem}_artifacts",
+        output_dir / "output_md" / f"{md_path.stem}_images",
     ]
+    seen = set()
     for c in candidates:
+        if c in seen:
+            continue
+        seen.add(c)
         if c.exists():
             return c
     return candidates[0]  # default guess, treated as empty if it doesn't exist
