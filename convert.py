@@ -341,72 +341,66 @@ def update_markdown_with_splits(md_path: Path, split_mapping: dict[str, list[tup
 
 
 def strip_code_blocks_near_images(md_path: Path) -> None:
-    """Removes ```fenced code blocks``` that appear right next to an image
-    (with only blank lines in between) so that each image is rendered on its
-    own without surrounding OCR'd code text from the figure region."""
+    """Removes OCR'd ```code blocks``` that sit just before a caption line
+    (e.g. ````...```` immediately followed by blank line and our inserted
+    `**filename.png**` caption). Leaves real prose intact — only fenced code
+    blocks are removed, never paragraph text."""
     content = md_path.read_text(encoding="utf-8")
     lines = content.splitlines()
 
-    # Pre-compute which line indices are images.
-    image_idx = {i for i, line in enumerate(lines) if line.strip().startswith("![")}
+    # Find caption line indices: `**...png**` lines we just inserted.
+    def is_caption(s: str) -> bool:
+        st = s.strip()
+        return st.startswith("**") and st.endswith("**") and ".png" in st
 
-    out: list[str] = []
-    i = 0
-    n = len(lines)
+    # Find indices of image lines.
+    def is_image(s: str) -> bool:
+        return s.strip().startswith("![")
+
     removed = 0
+    new_lines: list[str] = []
+    n = len(lines)
+    skip_until = -1  # set to index k after we delete a block, to skip pre-recorded lines
 
+    i = 0
     while i < n:
-        if i not in image_idx:
-            out.append(lines[i])
+        if i <= skip_until:
             i += 1
             continue
 
-        # We are at an image line. Walk backwards through `out` and drop any
-        # ``` fenced blocks whose only content between block-end and this image
-        # is blank lines.
-        # First, find trailing blanks in `out` to know where to start scanning.
-        scan_end = len(out)
-        while scan_end > 0 and out[scan_end - 1].strip() == "":
-            scan_end -= 1
+        new_lines.append(lines[i])
 
-        # From scan_end-1 backwards, walk back across blank lines + closing fence
-        # lines; if we hit a closing fence (```) preceded by a matching opening
-        # fence and only blanks/lines-with-code in between, drop them all.
-        j = scan_end - 1
-        # Only proceed if the immediately preceding non-blank line is a closing fence.
-        if j >= 0 and out[j].strip() == "```":
-            # Find the matching opening fence (also ```).
-            depth = 0
-            k = j
-            found_open = -1
-            while k >= 0:
-                if out[k].strip() == "```":
-                    if depth == 0:
-                        found_open = k
+        # If this line is a caption, look at the lines just before it. If they
+        # form a ``` fenced block ```, drop the whole block (opening fence
+        # through closing fence).
+        if is_caption(lines[i]):
+            # Walk backward through blanks to find the line right before.
+            j = len(new_lines) - 2  # new_lines already includes caption at -1
+            while j >= 0 and new_lines[j].strip() == "":
+                j -= 1
+            if j >= 0 and new_lines[j].strip().startswith("```"):
+                # That's a closing fence. Walk back to find the matching opening fence.
+                closing = j
+                k = j - 1
+                while k >= 0:
+                    if new_lines[k].strip().startswith("```"):
+                        opening = k
                         break
-                    depth -= 1
-                k -= 1
-            if found_open > 0 and out[found_open - 1].strip() != "```":
-                # Confirm the block contains only blank lines or a single ```-style
-                # code block (i.e. no prose). Anything that looks like a heading,
-                # paragraph, or list is preserved.
-                block_lines = out[found_open + 1 : j]
-                only_blanks = all(bl.strip() == "" for bl in block_lines)
-                if only_blanks:
-                    # Drop everything from found_open up to (but not including) the
-                    # blanks between the block and the image, then re-add one blank.
-                    del out[found_open:]
+                    k -= 1
+                else:
+                    opening = -1
+                if opening >= 0:
+                    # Drop everything from opening through closing inclusive
+                    # (and any blanks between closing and caption).
+                    del new_lines[opening:]
+                    # Re-append the caption (which we already added).
+                    new_lines.append(lines[i])
                     removed += 1
-                    # Make sure exactly one blank line separates previous content.
-                    if out and out[-1].strip() != "":
-                        out.append("")
 
-        # Now emit the image line.
-        out.append(lines[i])
         i += 1
 
     if removed:
-        md_path.write_text("\n".join(out) + "\n", encoding="utf-8")
+        md_path.write_text("\n".join(new_lines) + "\n", encoding="utf-8")
         print(f"[cleanup] removed {removed} code block(s) sitting next to image(s) in {md_path.name}")
 
 
@@ -440,6 +434,19 @@ def find_images_dir_for(md_path: Path) -> Path:
 def main():
     input_dir = Path(INPUT_DIR)
     output_dir = Path(OUTPUT_DIR)
+
+    # Fresh start: remove any prior markdown outputs so each run begins clean.
+    if output_dir.exists():
+        for old_md in output_dir.glob("*.md"):
+            old_md.unlink()
+        for nested in (output_dir / "output_md",):
+            if nested.exists():
+                for child in nested.glob("*"):
+                    if child.is_dir():
+                        import shutil
+                        shutil.rmtree(child)
+                    else:
+                        child.unlink()
 
     converter = build_converter()
     md_files = convert_documents(input_dir, output_dir, converter)
