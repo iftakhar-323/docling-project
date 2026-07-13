@@ -533,36 +533,16 @@ def split_grid_image(image_path: Path) -> list[tuple[Path, str]]:
         cropped_gray = np.array(cropped.convert("L"))
         y0, y1 = _trim_content_rows(cropped_gray)
 
-        # Look for any text band (sparse dark rows) sitting between (y0 - 30)
-        # and y0. If found, trim everything above the start of that band.
-        dark_mask = cropped_gray < (WHITE_THRESHOLD - 60)
-        h_local, w_local = cropped_gray.shape
-        row_density = dark_mask.sum(axis=1) / max(1, w_local)
+        # Always strip ANY text band above the real image content (per-
+        # subplot titles, suptitles, OCR bleed) completely — no text should
+        # ever remain baked into the image pixels. The title text itself is
+        # preserved separately (OCR'd before cropping, see segment_titles
+        # above) and placed as real markdown text below the image instead.
+        if y1 - y0 > 20:
+            cropped = cropped.crop((0, y0, cropped.width, y1))
 
-        # Find the topmost dense row (y0) and check rows just above it for any
-        # text-like content. If rows just above are sparse text, drop them.
-        scan_top = max(0, y0 - 40)
-        text_band_start = scan_top
-        for y in range(scan_top, y0):
-            if 0.03 < row_density[y] < 0.30:
-                text_band_start = y
-            elif row_density[y] == 0.0:
-                continue
-            else:
-                # Either dense or blank — stop scanning up.
-                break
-        # Keep tiny top padding only if there's text immediately above content
-        # (i.e. the per-subplot title).
-        if text_band_start < y0 and row_density[text_band_start:y0].mean() > 0.05:
-            # Per-subplot title present — keep a few px of it.
-            keep_top = max(text_band_start, y0 - 6)
-        else:
-            keep_top = y0
-
-        if y1 - keep_top > 20:
-            cropped = cropped.crop((0, keep_top, cropped.width, y1))
-
-        # Add a small top margin to keep the subplot title visible.
+        # Add a small white margin (pure padding, no text) for visual breathing
+        # room — the title itself is never kept in the image anymore.
         cw, ch = cropped.size
         top_pad = max(8, int(ch * 0.05))
         bottom_pad = max(8, int(ch * 0.05))
@@ -662,11 +642,12 @@ def _format_image_block(prefix: str, sp: Path, title: str, idx: int) -> list[str
         lines.extend(_text_as_markdown_lines(extracted))
         return lines
 
-    # Diagram/chart: keep the image, plus any text found on it.
-    if title:
-        lines.append(f"**{title}**")
+    # Diagram/chart: image first, then any title/text found on/near it —
+    # title goes BELOW the image as real text, never inside the image.
     lines.append(f"**{name}**")
     lines.append(f"![{label}]({prefix}{name})")
+    if title:
+        lines.append(title)
     if extracted:
         lines.append("")
         lines.extend(_text_as_markdown_lines(extracted))
