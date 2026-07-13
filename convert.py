@@ -641,9 +641,13 @@ def consolidate_images_for_merge(md_files: list[Path]) -> tuple[Path, dict[Path,
 
         md_text = md_path.read_text(encoding="utf-8")
         original_text = md_text
-        rel_prefix = ""
-        if "output_md/" in md_text or "output_md\\" in md_text:
-            rel_prefix = "output_md/"
+
+        # Both the per-file .md and the combined.md live inside OUTPUT_DIR,
+        # so image references in them must be RELATIVE to OUTPUT_DIR (i.e.
+        # `all_images/...`, not `output_md/all_images/...`). If the text
+        # still contains `output_md/` prefixes from Docling's earlier
+        # save_as_markdown call, strip them so paths resolve correctly.
+        md_text = _strip_output_md_prefix(md_text)
 
         # Move every file in images_dir to shared_dir, prefixing with the
         # source file stem so two sources can't collide on the same name.
@@ -657,20 +661,27 @@ def consolidate_images_for_merge(md_files: list[Path]) -> tuple[Path, dict[Path,
             if dest.exists():
                 dest.unlink()
             shutil.move(str(img), str(dest))
-            # Rewrite path references inside the markdown text. Match the
-            # file's basename only (the relative folder may vary between
-            # Docling versions, and the basename is unique after we move).
             old_basename = img.name
             new_basename = new_name
+            # Rewrite any remaining references (with whatever leftover
+            # folder prefix Docling may have used) so they resolve to the
+            # shared `all_images/` folder next to the .md files.
             md_text = md_text.replace(
-                f"({rel_prefix}{images_dir.name}/{old_basename})",
-                f"({rel_prefix}{COMBINED_IMAGES_DIR}/{new_basename})",
+                f"(output_md/{images_dir.name}/{old_basename})",
+                f"({COMBINED_IMAGES_DIR}/{new_basename})",
             )
-            # Also handle plain `(image_xxx.png)` references in case the
-            # markdown was rewritten somewhere without the folder prefix.
+            md_text = md_text.replace(
+                f"({images_dir.name}/{old_basename})",
+                f"({COMBINED_IMAGES_DIR}/{new_basename})",
+            )
+            md_text = md_text.replace(
+                f"(output_md/{COMBINED_IMAGES_DIR}/{old_basename})",
+                f"({COMBINED_IMAGES_DIR}/{new_basename})",
+            )
+            # Also handle plain `(image_xxx.png)` references (no folder).
             md_text = md_text.replace(
                 f"({old_basename})",
-                f"({rel_prefix}{COMBINED_IMAGES_DIR}/{new_basename})",
+                f"({COMBINED_IMAGES_DIR}/{new_basename})",
             )
 
         # Clean up now-empty per-file _artifacts directory and the nested
@@ -693,29 +704,29 @@ def consolidate_images_for_merge(md_files: list[Path]) -> tuple[Path, dict[Path,
     return shared_dir, {}
 
 
+def _strip_output_md_prefix(md_text: str) -> str:
+    """Strip any leading `output_md/` from image-link paths so the rewritten
+    markdown's image references resolve relative to OUTPUT_DIR (where the .md
+    files actually sit). Only touches the path inside `![..](..)`."""
+    import re as _re
+    return _re.sub(
+        r"(!\[[^\]]*\]\()output_md/([^)]+)(\))",
+        lambda m: m.group(1) + m.group(2) + m.group(3),
+        md_text,
+    )
+
+
 def merge_markdown_files(md_files: list[Path], output_path: Path) -> Path:
     """Concatenate all per-file markdown outputs into a single combined
     markdown file. Each source file is introduced with a clear `## Source`
     heading so the reader can see where one document ends and the next
     begins.
 
-    Image paths inside each per-file .md point at `output_md/all_images/...`
-    because that's where Docling saved them originally. Since the combined
-    file lives in the same `output_md/` directory, we strip the leading
-    `output_md/` from any image reference so paths resolve to `./all_images/`.
+    Image paths in each per-file .md already point at `./all_images/...` by
+    the time this runs (set by `consolidate_images_for_merge`), and the
+    combined file sits in the same directory, so no path rewriting is needed.
     """
     output_path.parent.mkdir(parents=True, exist_ok=True)
-
-    import re as _re
-    # Match markdown image links like `(path/to/img.png)` and strip a leading
-    # `output_md/` from the path so it resolves relative to combined.md.
-    _img_link_re = _re.compile(r"(!\[[^\]]*\]\()([^)]+)(\))")
-
-    def _strip_output_md(md_text: str) -> str:
-        return _img_link_re.sub(
-            lambda m: m.group(1) + m.group(2).replace("output_md/", "") + m.group(3),
-            md_text,
-        )
 
     parts: list[str] = []
     parts.append(f"# Combined Document\n")
@@ -726,7 +737,7 @@ def merge_markdown_files(md_files: list[Path], output_path: Path) -> Path:
     for idx, md_path in enumerate(md_files):
         if not md_path.exists():
             continue
-        text = _strip_output_md(md_path.read_text(encoding="utf-8")).strip()
+        text = md_path.read_text(encoding="utf-8").strip()
         if not text:
             continue
         parts.append("")

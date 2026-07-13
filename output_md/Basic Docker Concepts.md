@@ -23,10 +23,10 @@ In today's DevOps and cloud-native world, the ability to quickly deploy services
 
 **Part 1**
 **Basic Docker Concepts__image_000000_39e68af6226d7c9f358e7875c730cf800029a15e0a193e367c9cf7a0abe012ed_part1.png**
-![Part 1](output_md/all_images/Basic Docker Concepts__image_000000_39e68af6226d7c9f358e7875c730cf800029a15e0a193e367c9cf7a0abe012ed_part1.png)
+![Part 1](all_images/Basic Docker Concepts__image_000000_39e68af6226d7c9f358e7875c730cf800029a15e0a193e367c9cf7a0abe012ed_part1.png)
 **Part 2**
 **Basic Docker Concepts__image_000000_39e68af6226d7c9f358e7875c730cf800029a15e0a193e367c9cf7a0abe012ed_part2.png**
-![Part 2](output_md/all_images/Basic Docker Concepts__image_000000_39e68af6226d7c9f358e7875c730cf800029a15e0a193e367c9cf7a0abe012ed_part2.png)
+![Part 2](all_images/Basic Docker Concepts__image_000000_39e68af6226d7c9f358e7875c730cf800029a15e0a193e367c9cf7a0abe012ed_part2.png)
 
 This lab will guide you through the complete process of running an **NGINX web server inside a Docker container** using **Puku CLI** . You will learn how to pull the official NGINX Docker image, create a custom HTML page, configure a volume mount, run the container, and verify that the web server is running successfully.
 
@@ -74,7 +74,7 @@ Run the following command to download the latest official NGINX image from Docke
 docker pull nginx
 
 **Basic Docker Concepts__image_000001_3d0f24c68bef2702dd4fdfe756e9ada4d7031e99ced5f0bc1c249906e5faf772.png**
-![Image](output_md/all_images/Basic Docker Concepts__image_000001_3d0f24c68bef2702dd4fdfe756e9ada4d7031e99ced5f0bc1c249906e5faf772.png)
+![Image](all_images/Basic Docker Concepts__image_000001_3d0f24c68bef2702dd4fdfe756e9ada4d7031e99ced5f0bc1c249906e5faf772.png)
 
 Docker will download the required image layers. Once the download is complete, the latest NGINX image will be available on your local machine.
 
@@ -83,7 +83,7 @@ Docker will download the required image layers. Once the download is complete, t
 You should see output similar to the following in the Puku CLI terminal:
 
 **Basic Docker Concepts__image_000002_c40b3889b133ac72b0b44ed744890dcceefe1c0bbc070b02312622efbe61ce89.png**
-![Image](output_md/all_images/Basic Docker Concepts__image_000002_c40b3889b133ac72b0b44ed744890dcceefe1c0bbc070b02312622efbe61ce89.png)
+![Image](all_images/Basic Docker Concepts__image_000002_c40b3889b133ac72b0b44ed744890dcceefe1c0bbc070b02312622efbe61ce89.png)
 
 #### Verify the Download
 
@@ -92,14 +92,14 @@ To confirm that the image has been downloaded successfully, run:
 docker images
 
 **Basic Docker Concepts__image_000003_d3fc8307702e79a6b4cdc1b678530e15cf63a6a43cb7cca5084874114778b5b2.png**
-![Image](output_md/all_images/Basic Docker Concepts__image_000003_d3fc8307702e79a6b4cdc1b678530e15cf63a6a43cb7cca5084874114778b5b2.png)
+![Image](all_images/Basic Docker Concepts__image_000003_d3fc8307702e79a6b4cdc1b678530e15cf63a6a43cb7cca5084874114778b5b2.png)
 
 **Expected Output**
 
 The command should list the nginx image with the latest tag.
 
 **Basic Docker Concepts__image_000004_f79b74c4f53d0758a6232ef685c6d87d512cd25a9721e9864b096b5e07d1e03b.png**
-![Image](output_md/all_images/Basic Docker Concepts__image_000004_f79b74c4f53d0758a6232ef685c6d87d512cd25a9721e9864b096b5e07d1e03b.png)
+![Image](all_images/Basic Docker Concepts__image_000004_f79b74c4f53d0758a6232ef685c6d87d512cd25a9721e9864b096b5e07d1e03b.png)
 
 This format is much cleaner because the screenshots you capture from **Puku CLI** will naturally match the text in your documentation.
 
@@ -110,7 +110,7 @@ Here's the Puku CLI version with only the necessary changes. The commands stay t
 Open the **Puku CLI integrated terminal** and create a directory to store your custom HTML content. This directory will later be mounted into the NGINX container.
 
 **Basic Docker Concepts__image_000005_a6eec19b9f1450b21498f87672dffe4d945b9f9ffedc98fb62d17983ab347e1d.png**
-![Image](output_md/all_images/Basic Docker Concepts__image_000005_a6eec19b9f1450b21498f87672dffe4d945b9f9ffedc98fb62d17983ab347e1d.png)
+![Image](all_images/Basic Docker Concepts__image_000005_a6eec19b9f1450b21498f87672dffe4d945b9f9ffedc98fb62d17983ab347e1d.png)
 
 This directory will act as the source for the web content served by the NGINX container, allowing you to update files without modifying the container itself.
 
@@ -119,7 +119,7 @@ This directory will act as the source for the web content served by the NGINX co
 Create a simple HTML page inside the html directory by running the following command:
 
 **Basic Docker Concepts__image_000006_39c020f80ffd0ac5e551a3081535353b2a89df210d92c855a519a4ff67ff0751.png**
-![Image](output_md/all_images/Basic Docker Concepts__image_000006_39c020f80ffd0ac5e551a3081535353b2a89df210d92c855a519a4ff67ff0751.png)
+![Image](all_images/Basic Docker Concepts__image_000006_39c020f80ffd0ac5e551a3081535353b2a89df210d92c855a519a4ff67ff0751.png)
 
 This page will be served by the NGINX web server once the container is running.
 
@@ -128,7 +128,7 @@ This page will be served by the NGINX web server once the container is running.
 From the **Puku CLI integrated terminal** , run the following command:
 
 **Basic Docker Concepts__image_000007_0df2f31113b163049852f4c1946f45849f4473033ef58ba5d07deb057ce494e2.png**
-![Image](output_md/all_images/Basic Docker Concepts__image_000007_0df2f31113b163049852f4c1946f45849f4473033ef58ba5d07deb057ce494e2.png)
+![Image](all_images/Basic Docker Concepts__image_000007_0df2f31113b163049852f4c1946f45849f4473033ef58ba5d07deb057ce494e2.png)
 
 **Note:** On Windows PowerShell, replace $(pwd) with ${PWD} if required.
 
@@ -144,7 +144,7 @@ From the **Puku CLI integrated terminal** , run the following command:
 If the command executes successfully, Docker will return a long container ID.
 
 **Basic Docker Concepts__image_000008_f10c690de8c020aaf4dfa513c3bac71456f0180a41b0bd26b88556a47883a968.png**
-![Image](output_md/all_images/Basic Docker Concepts__image_000008_f10c690de8c020aaf4dfa513c3bac71456f0180a41b0bd26b88556a47883a968.png)
+![Image](all_images/Basic Docker Concepts__image_000008_f10c690de8c020aaf4dfa513c3bac71456f0180a41b0bd26b88556a47883a968.png)
 
 ## 
 
@@ -155,7 +155,7 @@ If the command executes successfully, Docker will return a long container ID.
 Run the following command to confirm that the NGINX container is running:
 
 **Basic Docker Concepts__image_000009_a2367ebb15710c3761d2368ce26d19dad75a0acf4735ef52268efc555a9695a0.png**
-![Image](output_md/all_images/Basic Docker Concepts__image_000009_a2367ebb15710c3761d2368ce26d19dad75a0acf4735ef52268efc555a9695a0.png)
+![Image](all_images/Basic Docker Concepts__image_000009_a2367ebb15710c3761d2368ce26d19dad75a0acf4735ef52268efc555a9695a0.png)
 
 Verify that:
 
@@ -172,7 +172,7 @@ curl http://localhost:50000
 Expected output:
 
 **Basic Docker Concepts__image_000010_d64048952936f48016d8e9ea0550e2e399a991fd8d490401f6d1e16968a88dff.png**
-![Image](output_md/all_images/Basic Docker Concepts__image_000010_d64048952936f48016d8e9ea0550e2e399a991fd8d490401f6d1e16968a88dff.png)
+![Image](all_images/Basic Docker Concepts__image_000010_d64048952936f48016d8e9ea0550e2e399a991fd8d490401f6d1e16968a88dff.png)
 
 If you're using **Puku CLI** , you can also open the forwarded port from the Ports panel or the generated preview URL to view the page in your browser.
 
@@ -199,7 +199,7 @@ docker logs my-nginx
 Example output:
 
 **Basic Docker Concepts__image_000011_8e0750bc17bffa7d2e5f89de88015943c2d017cffd2672fb153d722895e911cd.png**
-![Image](output_md/all_images/Basic Docker Concepts__image_000011_8e0750bc17bffa7d2e5f89de88015943c2d017cffd2672fb153d722895e911cd.png)
+![Image](all_images/Basic Docker Concepts__image_000011_8e0750bc17bffa7d2e5f89de88015943c2d017cffd2672fb153d722895e911cd.png)
 
 Viewing logs is useful for debugging configuration issues and monitoring the container.
 
