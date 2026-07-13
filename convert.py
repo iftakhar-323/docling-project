@@ -256,6 +256,96 @@ def split_grid_image(image_path: Path) -> list[tuple[Path, str]]:
     except Exception:
         engine = None
 
+    # Pre-OCR the per-subplot title for each segment by reading the title band
+    # from the ORIGINAL (untrimmed) image at the segment's column range. We do
+    # this here, before cropping, because the trim step below intentionally
+    # removes any text band from the saved file — once trimmed, the title is
+    # gone from the image and OCR can't recover it. So we capture the title
+    # text up front and emit it as a markdown line above each image instead.
+    segment_titles: list[str] = []
+    if engine is not None:
+        # Detect the title-band row range once on the full image: rows with
+        # density 0.05..0.30 sitting between two quiet zones (typical pattern:
+        # [code text] / gap / [subplot title] / gap / [dense content]).
+        # We look at columns restricted to the segment being processed so we
+        # only OCR text from that subplot.
+        full_dark = gray < (WHITE_THRESHOLD - 60)
+        full_row_density = full_dark.sum(axis=1) / max(1, gray.shape[1])
+
+        for seg_idx, (a0, a1) in enumerate(segments, start=1):
+            seg_dark = full_dark[:, a0:a1]
+            seg_row_density = seg_dark.sum(axis=1) / max(1, seg_dark.shape[1])
+            # Find the title band: the bottom-most run of 1..6 rows where
+            # density is in (0.05, 0.30), sitting directly above a long dense
+            # run (>= 30 rows of density >= 0.50).
+            # Step 1: locate the topmost long dense run.
+            dense_run_start = -1
+            run = 0
+            for y in range(seg_row_density.shape[0]):
+                if seg_row_density[y] >= 0.50:
+                    run += 1
+                    if run >= 30:
+                        dense_run_start = y - run + 1
+                        break
+                else:
+                    run = 0
+            title_text = ""
+            if dense_run_start > 0:
+                # Step 2: look at the rows just above the dense run. Find
+                # the bottommost contiguous text band (rows 0.05..0.30) that
+                # starts within 60 px of the dense run.
+                scan_top = max(0, dense_run_start - 60)
+                # Find a candidate title band: walk down from the top of this
+                # scan window. Each band is text density surrounded by blanks.
+                bands: list[tuple[int, int]] = []
+                band_start = -1
+                for y in range(scan_top, dense_run_start):
+                    d = seg_row_density[y]
+                    if 0.04 < d < 0.35:
+                        if band_start < 0:
+                            band_start = y
+                    else:
+                        if band_start >= 0:
+                            bands.append((band_start, y - 1))
+                            band_start = -1
+                if band_start >= 0:
+                    bands.append((band_start, dense_run_start - 1))
+                # Pick the bottommost band (closest to dense content) — that's
+                # most likely the per-subplot title, not the suptitle above.
+                if bands:
+                    title_band_top, title_band_bot = bands[-1]
+                    # Pad a little top/bottom to give OCR room.
+                    pad = 3
+                    y0 = max(0, title_band_top - pad)
+                    y1 = min(gray.shape[0], title_band_bot + pad + 1)
+                    if horizontal:
+                        title_crop = img.crop((a0, y0, a1, y1))
+                    else:
+                        title_crop = img.crop((0, y0, gray.shape[1], y1))
+                    try:
+                        out = engine(title_crop)
+                        txts = getattr(out, "txts", None) or []
+                        # Skip lines that look like Python code (heuristic:
+                        # lines containing '=' or starting with 'plt.' are
+                        # the print() output, not the rendered subplot title).
+                        filtered = []
+                        for t in txts:
+                            s = (t or "").strip()
+                            if not s:
+                                continue
+                            if s.startswith("plt.") or "import " in s or "=" in s and "(" in s:
+                                continue
+                            filtered.append(s)
+                        if filtered:
+                            title_text = " ".join(filtered).strip()
+                            if len(title_text) > 80:
+                                title_text = title_text[:80].rstrip() + "…"
+                    except Exception:
+                        pass
+            segment_titles.append(title_text)
+    else:
+        segment_titles = [""] * len(segments)
+
     for idx, (a0, a1) in enumerate(segments, start=1):
         if horizontal:
             cropped = img.crop((a0, 0, a1, img.height))
@@ -263,10 +353,9 @@ def split_grid_image(image_path: Path) -> list[tuple[Path, str]]:
             cropped = img.crop((0, a0, img.width, a1))
 
         # Trim out any stray title/OCR text that bleeds into the part. The
-        # per-subplot title (when present in the image) sits RIGHT against the
-        # top of the dense content, so a small top pad keeps it while dropping
-        # any suptitle/OCR text rows that appear above it. We also remove
-        # any text band detected just above the dense content.
+        # per-subplot title has already been captured above (segment_titles)
+        # and will be emitted as a markdown line above each image, so the
+        # saved image file itself stays free of text artefacts.
         cropped_gray = np.array(cropped.convert("L"))
         y0, y1 = _trim_content_rows(cropped_gray)
 
@@ -307,23 +396,12 @@ def split_grid_image(image_path: Path) -> list[tuple[Path, str]]:
             from PIL import ImageOps
             cropped = ImageOps.expand(cropped, border=(0, top_pad, 0, bottom_pad), fill="white")
 
-        # OCR the title band on the *trimmed* crop so we read the subplot title,
-        # not the print-output/suptitle text that bled into the part.
-        title = f"Part {idx}"
-        if engine is not None:
-            cw2, ch2 = cropped.size
-            title_band = cropped.crop((0, 0, cw2, max(1, ch2 // 5)))
-            try:
-                output = engine(title_band)
-                txts = getattr(output, "txts", None) or []
-                text = " ".join(t.strip() for t in txts if t and t.strip())
-                text = text.strip()
-                if len(text) > 60:
-                    text = text[:60].rstrip() + "…"
-                if text:
-                    title = text
-            except Exception:
-                pass
+        # Use the per-subplot title we OCR'd up front (before trim removed the
+        # title text from the image). Fall back to "Part N" when nothing was
+        # detected.
+        title = segment_titles[idx - 1] if idx - 1 < len(segment_titles) else ""
+        if not title:
+            title = f"Part {idx}"
 
         out_path = image_path.with_name(f"{stem}_part{idx}{suffix}")
         cropped.save(out_path)
@@ -357,13 +435,21 @@ def process_images_dir(images_dir: Path) -> dict[str, list[tuple[Path, str]]]:
 #         own lines.
 # --------------------------------------------------------------------------
 def _format_image_block(prefix: str, sp: Path, title: str, idx: int) -> list[str]:
-    """Returns 2 markdown lines: the caption (filename) and the image line."""
+    """Returns the markdown lines for one split part:
+    - If a per-subplot title was OCR'd, emit it as a visible text line on its
+      own so the reader sees the title above the image.
+    - The filename line stays as a caption below the title (or above if no
+      title was detected).
+    - The image line keeps the title in the alt-text for accessibility.
+    """
     name = sp.name
     label = title or f"Part {idx}"
-    return [
-        f"**{name}**",
-        f"![{label}]({prefix}{name})",
-    ]
+    lines: list[str] = []
+    if title:
+        lines.append(f"**{title}**")
+    lines.append(f"**{name}**")
+    lines.append(f"![{label}]({prefix}{name})")
+    return lines
 
 
 def update_markdown_with_splits(md_path: Path, split_mapping: dict[str, list[tuple[Path, str]]]) -> None:
