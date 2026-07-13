@@ -83,8 +83,8 @@ def _find_gap_columns(gray: np.ndarray) -> np.ndarray:
 def _trim_content_rows(gray: np.ndarray) -> tuple[int, int]:
     """Returns (y_start, y_end) of the main dark-content block inside a
     cropped image slice. Skips thin text rows (suptitles, OCR bleed) at the
-    top by requiring rows to have a high density of dark pixels (image
-    content), not just sparse text strokes."""
+    top by requiring a long run of dense rows (real image content), not just
+    one or two dense rows that may be text descenders or punctuation."""
     h, w = gray.shape
     if h == 0:
         return 0, 0
@@ -95,20 +95,58 @@ def _trim_content_rows(gray: np.ndarray) -> tuple[int, int]:
     dark_mask = gray < (WHITE_THRESHOLD - 60)
     row_density = dark_mask.sum(axis=1) / max(1, w)
 
-    # Density threshold: text rows have density < 0.15; image rows have >= 0.30.
+    # Find the first run of MIN_RUN consecutive dense rows. Image content has
+    # long dense stretches; text rows are short isolated dense strokes.
     DENSITY_THRESHOLD = 0.30
-    is_content = row_density >= DENSITY_THRESHOLD
+    MIN_RUN = 15
+    is_dense = row_density >= DENSITY_THRESHOLD
 
-    if not is_content.any():
-        # Fall back to first/last dark row.
+    start_y = 0
+    run = 0
+    found = False
+    for y in range(h):
+        if is_dense[y]:
+            run += 1
+            if run >= MIN_RUN:
+                # First row of this long run is our content start.
+                start_y = y - run + 1
+                found = True
+                break
+        else:
+            run = 0
+
+    if not found:
+        # No long dense run found: fall back to first dark row, or full image.
         any_dark = dark_mask.any(axis=1)
         if not any_dark.any():
             return 0, h
         ys = np.where(any_dark)[0]
         return int(ys[0]), int(ys[-1]) + 1
 
-    ys = np.where(is_content)[0]
-    return int(ys[0]), int(ys[-1]) + 1
+    # Now find the end: walk from start_y to find the last dense row that is
+    # followed by enough dense rows to be content (avoid stopping at a text
+    # descender above another text band).
+    end_y = h
+    run = 0
+    last_dense = start_y
+    for y in range(start_y, h):
+        if is_dense[y]:
+            run += 1
+            last_dense = y
+        else:
+            if run >= MIN_RUN:
+                # This was a real content run; keep last_dense as current end.
+                end_y = last_dense + 1
+            run = 0
+    if run >= MIN_RUN:
+        end_y = last_dense + 1
+
+    # If everything after start_y is sparse text (no MIN_RUN block), keep
+    # start_y to end of image rather than nothing.
+    if end_y <= start_y:
+        end_y = h
+
+    return int(start_y), int(end_y)
 
 
 def _find_subplot_titles(img: Image.Image, segments: list[tuple[int, int]],
@@ -224,13 +262,13 @@ def split_grid_image(image_path: Path) -> list[tuple[Path, str]]:
         else:
             cropped = img.crop((0, a0, img.width, a1))
 
-        # Trim out any stray title/OCR text that bleeds into the part. Use a
-        # small padding so the per-subplot title stays visible, while the
-        # suptitle (which sits well above the first row of dense content) is
-        # removed.
+        # Trim out any stray title/OCR text that bleeds into the part. The
+        # per-subplot title sits just above the dense content (within ~12 px),
+        # so a small top pad keeps it visible while cutting off the suptitle
+        # and OCR print() output that sits well above the first dense block.
         cropped_gray = np.array(cropped.convert("L"))
         y0, y1 = _trim_content_rows(cropped_gray)
-        title_pad = max(8, int(cropped.height * 0.04))
+        title_pad = 12  # enough for per-subplot title text, drops suptitle
         y0_padded = max(0, y0 - title_pad)
         if y1 - y0_padded > 20:
             cropped = cropped.crop((0, y0_padded, cropped.width, y1))
