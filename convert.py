@@ -80,6 +80,55 @@ def _find_gap_columns(gray: np.ndarray) -> np.ndarray:
     return col_means > WHITE_THRESHOLD
 
 
+def _trim_content_rows(gray: np.ndarray) -> tuple[int, int]:
+    """Returns (y_start, y_end) of the main dark-content block inside a
+    cropped image slice. Used to trim stray title/OCR text that bleeds in
+    from above the figure."""
+    row_means = gray.mean(axis=1)
+    # Identify rows that are clearly "dark" (i.e. belong to the image proper).
+    dark = row_means < (WHITE_THRESHOLD - 60)
+    if not dark.any():
+        return 0, gray.shape[0]
+    ys = np.where(dark)[0]
+    return int(ys[0]), int(ys[-1]) + 1
+
+
+def _find_subplot_titles(img: Image.Image, segments: list[tuple[int, int]],
+                          horizontal: bool) -> list[str]:
+    """Best-effort: read the title text near the top of each subplot using
+    RapidOCR (already available via Docling). Falls back to 'Part N' if OCR
+    fails or returns no text."""
+    titles: list[str] = []
+    w, h = img.size
+    try:
+        from rapidocr import RapidOCR  # type: ignore
+        engine = RapidOCR()
+    except Exception:
+        return [f"Part {i + 1}" for i in range(len(segments))]
+
+    for i, (a0, a1) in enumerate(segments):
+        if horizontal:
+            crop = img.crop((a0, 0, a1, h))
+        else:
+            crop = img.crop((0, a0, w, a1))
+        cw, ch = crop.size
+        title_band = crop.crop((0, 0, cw, max(1, ch // 5)))
+        text = ""
+        try:
+            output = engine(title_band)
+            # RapidOCR returns a RapidOCROutput object with .txts (tuple).
+            txts = getattr(output, "txts", None) or []
+            text = " ".join(t.strip() for t in txts if t and t.strip())
+        except Exception:
+            text = ""
+        # Trim noise / overly long OCR output.
+        text = text.strip()
+        if len(text) > 80:
+            text = text[:80].rstrip() + "…"
+        titles.append(text or f"Part {i + 1}")
+    return titles
+
+
 def _segments_from_gap_mask(gap_mask: np.ndarray) -> list[tuple[int, int]]:
     """Extracts real content segments (start, end) from the gap mask,
     ignoring gaps narrower than MIN_GAP_WIDTH."""
@@ -106,7 +155,17 @@ def _segments_from_gap_mask(gap_mask: np.ndarray) -> list[tuple[int, int]]:
     return [(s, e) for s, e in segments if (e - s) >= MIN_SEGMENT_SIZE]
 
 
-def split_grid_image(image_path: Path) -> list[Path]:
+def split_grid_image(image_path: Path) -> list[tuple[Path, str]]:
+    """
+    Splits a combined grid image (e.g. 3 subplots side by side or stacked
+    vertically) into separate image files, if there is a clear whitespace gap
+    between the subplots.
+
+    Returns a list of (split_image_path, title) tuples. The title is the OCR'd
+    subplot title (e.g. "Thresholds: (0.03, 0.09)"), or "Part N" as fallback.
+    If splitting isn't possible (only 1 segment found in either direction),
+    returns the original image_path with an empty title wrapped in a tuple.
+    """
     """
     Splits a combined grid image (e.g. 3 subplots side by side or stacked
     vertically) into separate image files, if there is a clear whitespace gap
@@ -137,33 +196,76 @@ def split_grid_image(image_path: Path) -> list[Path]:
         horizontal = False
     else:
         # nothing worth splitting, keep the original image
-        return [image_path]
+        return [(image_path, "")]
 
-    split_paths = []
+    split_paths: list[tuple[Path, str]] = []
     stem = image_path.stem
     suffix = image_path.suffix
+
+    # Lazy import — only when we actually need to OCR titles.
+    try:
+        from rapidocr import RapidOCR  # type: ignore
+        engine = RapidOCR()
+    except Exception:
+        engine = None
 
     for idx, (a0, a1) in enumerate(segments, start=1):
         if horizontal:
             cropped = img.crop((a0, 0, a1, img.height))
         else:
             cropped = img.crop((0, a0, img.width, a1))
+
+        # Trim out any stray title/OCR text that bleeds into the part.
+        cropped_gray = np.array(cropped.convert("L"))
+        y0, y1 = _trim_content_rows(cropped_gray)
+        # Pad a little so titles inside the subplot aren't lopped off.
+        title_pad = max(1, int(cropped.height * 0.12))
+        y0_padded = max(0, y0 - title_pad)
+        if y1 - y0_padded > 20:
+            cropped = cropped.crop((0, y0_padded, cropped.width, y1))
+
+        # Add a small top margin to keep the subplot title visible.
+        cw, ch = cropped.size
+        top_pad = max(8, int(ch * 0.05))
+        bottom_pad = max(8, int(ch * 0.05))
+        if cw > 0 and ch > 0:
+            from PIL import ImageOps
+            cropped = ImageOps.expand(cropped, border=(0, top_pad, 0, bottom_pad), fill="white")
+
+        # OCR the title band on the *trimmed* crop so we read the subplot title,
+        # not the print-output/suptitle text that bled into the part.
+        title = f"Part {idx}"
+        if engine is not None:
+            cw2, ch2 = cropped.size
+            title_band = cropped.crop((0, 0, cw2, max(1, ch2 // 5)))
+            try:
+                output = engine(title_band)
+                txts = getattr(output, "txts", None) or []
+                text = " ".join(t.strip() for t in txts if t and t.strip())
+                text = text.strip()
+                if len(text) > 60:
+                    text = text[:60].rstrip() + "…"
+                if text:
+                    title = text
+            except Exception:
+                pass
+
         out_path = image_path.with_name(f"{stem}_part{idx}{suffix}")
         cropped.save(out_path)
-        split_paths.append(out_path)
+        split_paths.append((out_path, title))
 
     direction = "horizontally" if horizontal else "vertically"
     print(f"[split] {image_path.name} → split {direction} into {len(split_paths)} separate images")
     return split_paths
 
 
-def process_images_dir(images_dir: Path) -> dict[str, list[Path]]:
+def process_images_dir(images_dir: Path) -> dict[str, list[tuple[Path, str]]]:
     """Checks every image in images_dir, splits it if applicable, and returns
-    a mapping: original_image_filename -> [new split image paths]"""
+    a mapping: original_image_filename -> [(split_image_path, title), ...]"""
     if not images_dir.exists():
         return {}
 
-    mapping = {}
+    mapping: dict[str, list[tuple[Path, str]]] = {}
     for img_file in sorted(images_dir.glob("*")):
         if img_file.suffix.lower() not in (".png", ".jpg", ".jpeg"):
             continue
@@ -178,9 +280,10 @@ def process_images_dir(images_dir: Path) -> dict[str, list[Path]]:
 # STEP 3: Update the markdown file so split images are referenced on
 #         separate lines
 # --------------------------------------------------------------------------
-def update_markdown_with_splits(md_path: Path, split_mapping: dict[str, list[Path]]) -> None:
+def update_markdown_with_splits(md_path: Path, split_mapping: dict[str, list[tuple[Path, str]]]) -> None:
     """Reads the markdown file, and wherever the original combined image is
-    referenced, replaces that line with one markdown image line per split image."""
+    referenced, replaces that line with one markdown image line per split image,
+    labelled with the detected subplot title (or 'Part N')."""
     if not split_mapping:
         return
 
@@ -198,8 +301,9 @@ def update_markdown_with_splits(md_path: Path, split_mapping: dict[str, list[Pat
                     inside = line.split("(", 1)[1].rsplit(")", 1)[0]
                     if "/" in inside:
                         prefix = inside.rsplit("/", 1)[0] + "/"
-                for i, sp in enumerate(split_paths, start=1):
-                    new_lines.append(f"![Part {i}]({prefix}{sp.name})")
+                for i, (sp, title) in enumerate(split_paths, start=1):
+                    label = title or f"Part {i}"
+                    new_lines.append(f"![{label}]({prefix}{sp.name})")
                 replaced = True
                 break
         if not replaced:

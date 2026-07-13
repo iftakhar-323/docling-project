@@ -31,8 +31,8 @@ The Canny edge detection algorithm is applied using three distinct gradient filt
 ```
 GAUSSIAN_KSIZE = 5 SIGMA = 1.0 LOW_THRESHOLD = 30 HIGH_THRESHOLD = 90 sobel_edges = custom_canny(gray_image, 'sobel', GAUSSIAN_KSIZE, SIGMA, LOW_THRESHOLD, HIGH_TH prewitt_edges = custom_canny(gray_image, 'prewitt', GAUSSIAN_KSIZE, SIGMA, LOW_THRESHOLD, HIG roberts_edges = custom_canny(gray_image, 'roberts', GAUSSIAN_KSIZE, SIGMA, LOW_THRESHOLD, HIG plt.figure(figsize=(18, 6)) plt.subplot(1, 3, 1) plt.imshow(sobel_edges, cmap='gray') plt.title('Canny with Sobel Filter') plt.axis('off') plt.subplot(1, 3, 2) plt.imshow(prewitt_edges, cmap='gray') plt.title('Canny with Prewitt Filter')
 
-![Part 1](output_md/dip1_artifacts/image_000001_6b2a2aecf78dafd441f3adf18a857fa49a80e7232d98a4f09bda07851334f781_part1.png)
-![Part 2](output_md/dip1_artifacts/image_000001_6b2a2aecf78dafd441f3adf18a857fa49a80e7232d98a4f09bda07851334f781_part2.png)
+![pll.ax⊥s( u1 plt.subplot(1, 3, 3) plt.imshow(roberts_edges,…](output_md/dip1_artifacts/image_000001_6b2a2aecf78dafd441f3adf18a857fa49a80e7232d98a4f09bda07851334f781_part1.png)
+![( IanT」 SS0 omparison for Canny Edge Detect](output_md/dip1_artifacts/image_000001_6b2a2aecf78dafd441f3adf18a857fa49a80e7232d98a4f09bda07851334f781_part2.png)
 ![Part 3](output_md/dip1_artifacts/image_000001_6b2a2aecf78dafd441f3adf18a857fa49a80e7232d98a4f09bda07851334f781_part3.png)
 
 ## Comparison Summary of Gradient Filters:
@@ -58,9 +58,9 @@ BEST_FILTER = 'sobel' FIXED_SIGMA = 1.0
 ```
 FIXED_LOW_THRESHOLD = 30 FIXED_HIGH_THRESHOLD = 90 kernel_sizes = [3, 5, 7] edges_ksize_comparison = [] for ksize in kernel_sizes: edges = custom_canny(gray_image, BEST_FILTER, ksize, FIXED_SIGMA, FIXED_LOW_THRESHOLD, FI edges_ksize_comparison.append(edges) plt.figure(figsize=(18, 6)) for i, ksize in enumerate(kernel_sizes): plt.subplot(1, len(kernel_sizes), i + 1) plt.imshow(edges_ksize_comparison[i], cmap='gray') plt.title(f'Kernel Size: {ksize}x{ksize}') plt.axis('off') plt.suptitle('Canny Edge Detection: Gaussian Kernel Size Comparison (Sobel Filter)', fontsize plt.tight_layout(rect=[0, 0.03, 1, 0.95]) plt.show()
 
-![Part 1](output_md/dip1_artifacts/image_000002_88f56ae1b1c542bdc2f7dfcfa596deedff49ecb868129a11429e95b78d4f7b82_part1.png)
-![Part 2](output_md/dip1_artifacts/image_000002_88f56ae1b1c542bdc2f7dfcfa596deedff49ecb868129a11429e95b78d4f7b82_part2.png)
-![Part 3](output_md/dip1_artifacts/image_000002_88f56ae1b1c542bdc2f7dfcfa596deedff49ecb868129a11429e95b78d4f7b82_part3.png)
+![Kernel Size: 3x3](output_md/dip1_artifacts/image_000002_88f56ae1b1c542bdc2f7dfcfa596deedff49ecb868129a11429e95b78d4f7b82_part1.png)
+![Ige Detection: Gaussian Kernel Size Comparison (So](output_md/dip1_artifacts/image_000002_88f56ae1b1c542bdc2f7dfcfa596deedff49ecb868129a11429e95b78d4f7b82_part2.png)
+![Kernel Size: 7x7](output_md/dip1_artifacts/image_000002_88f56ae1b1c542bdc2f7dfcfa596deedff49ecb868129a11429e95b78d4f7b82_part3.png)
 
 ## Sigma Value Tuning 
 
@@ -69,9 +69,9 @@ The impact of the sigma value (standard deviation of the Gaussian blur) on edge 
 ```
 BEST_KSIZE_FOR_SIGMA_TUNING = 5 sigma_values = [0.5, 1.0, 1.5] edges_sigma_comparison = [] for sigma in sigma_values: edges = custom_canny(gray_image, BEST_FILTER, BEST_KSIZE_FOR_SIGMA_TUNING, sigma, FIXED_L edges_sigma_comparison.append(edges) plt.figure(figsize=(18, 6)) for i, sigma in enumerate(sigma_values): plt.subplot(1, len(sigma_values), i + 1) plt.imshow(edges_sigma_comparison[i], cmap='gray') plt.title(f'Sigma: {sigma}') plt.axis('off') plt.suptitle('Canny Edge Detection: Sigma Value Comparison (Sobel Filter)', fontsize=16) plt.tight_layout(rect=[0, 0.03, 1, 0.95])
 
-![Part 1](output_md/dip1_artifacts/image_000003_1b2f0ecbd658fe2501663cad87e9b1d7f5a468eff25ff8376c0c2ad447a07d1c_part1.png)
-![Part 2](output_md/dip1_artifacts/image_000003_1b2f0ecbd658fe2501663cad87e9b1d7f5a468eff25ff8376c0c2ad447a07d1c_part2.png)
-![Part 3](output_md/dip1_artifacts/image_000003_1b2f0ecbd658fe2501663cad87e9b1d7f5a468eff25ff8376c0c2ad447a07d1c_part3.png)
+![Sigma: 0.5](output_md/dip1_artifacts/image_000003_1b2f0ecbd658fe2501663cad87e9b1d7f5a468eff25ff8376c0c2ad447a07d1c_part1.png)
+![y Edge Detection: Sigma Value Comparison (Sobel F](output_md/dip1_artifacts/image_000003_1b2f0ecbd658fe2501663cad87e9b1d7f5a468eff25ff8376c0c2ad447a07d1c_part2.png)
+![Sigma: 1.5](output_md/dip1_artifacts/image_000003_1b2f0ecbd658fe2501663cad87e9b1d7f5a468eff25ff8376c0c2ad447a07d1c_part3.png)
 
 ## Threshold Pair Tuning 
 
@@ -80,9 +80,9 @@ This section explores the effect of varying low\_threshold and high\_threshold v
 ```
 BEST_KSIZE_FOR_THRESHOLD_TUNING = 5 BEST_SIGMA_FOR_THRESHOLD_TUNING = 1.0 threshold_pairs = [(0.03, 0.09), (0.05, 0.11), (0.08, 0.16)] edges_threshold_comparison = [] scaled_threshold_pairs = [] for low_t, high_t in threshold_pairs: scaled_low = int(low_t * 255) scaled_high = int(high_t * 255) scaled_threshold_pairs.append((scaled_low, scaled_high)) print(f"Original relative threshold pairs: {threshold_pairs}") print(f"Scaled absolute threshold pairs (low, high): {scaled_threshold_pairs}") for low_t, high_t in scaled_threshold_pairs: edges = custom_canny(gray_image, BEST_FILTER, BEST_KSIZE_FOR_THRESHOLD_TUNING, BEST_SIGMA edges_threshold_comparison.append(edges) plt.figure(figsize=(18, 6)) for i, (low_t_orig, high_t_orig) in enumerate(threshold_pairs): plt.subplot(1, len(threshold_pairs), i + 1) plt.imshow(edges_threshold_comparison[i], cmap='gray') plt.title(f'Thresholds: ({low_t_orig:.2f}, {high_t_orig:.2f})') plt.axis('off') plt.suptitle('Canny Edge Detection: Threshold Comparison (Sobel Filter)', fontsize=16) plt.tight_layout(rect=[0, 0.03, 1, 0.95]) plt.show()
 
-![Part 1](output_md/dip1_artifacts/image_000004_2e625d801c33b7155ee659cab4e48241db57b559175f46f7d5808fadbe992aa6_part1.png)
-![Part 2](output_md/dip1_artifacts/image_000004_2e625d801c33b7155ee659cab4e48241db57b559175f46f7d5808fadbe992aa6_part2.png)
-![Part 3](output_md/dip1_artifacts/image_000004_2e625d801c33b7155ee659cab4e48241db57b559175f46f7d5808fadbe992aa6_part3.png)
+![Driginal relative threshold pai Scaled absolute threshold pa…](output_md/dip1_artifacts/image_000004_2e625d801c33b7155ee659cab4e48241db57b559175f46f7d5808fadbe992aa6_part1.png)
+![S: 1(0.05, 0.09), (0.05, 0.11) (low, high): [(7, 22), (12, 2…](output_md/dip1_artifacts/image_000004_2e625d801c33b7155ee659cab4e48241db57b559175f46f7d5808fadbe992aa6_part2.png)
+![Thresholds: (0.08, 0.16)](output_md/dip1_artifacts/image_000004_2e625d801c33b7155ee659cab4e48241db57b559175f46f7d5808fadbe992aa6_part3.png)
 
 ## Final Optimized Edge Map 
 
