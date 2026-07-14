@@ -35,7 +35,7 @@ SUPPORTED_EXTENSIONS = (".pdf", ".pptx", ".docx")
 
 # Grid-splitting tuning (adjust these if splitting doesn't work well)
 WHITE_THRESHOLD = 235       # column/row mean brightness above this is considered a gap
-MIN_GAP_WIDTH = 20          # a gap narrower than this is ignored (avoids noise from text spacing)
+MIN_GAP_WIDTH = 12          # a gap narrower than this is ignored (avoids noise from text spacing)
 MIN_SEGMENT_SIZE = 120      # segments smaller than this are discarded as noise
 # An aspect-ratio sanity check: if any candidate segment is unreasonably
 # narrow vs the full image, we reject the whole split (it's almost certainly
@@ -119,11 +119,23 @@ def convert_documents(input_dir: Path, output_dir: Path, converter: DocumentConv
 # --------------------------------------------------------------------------
 # STEP 2: Split combined grid images into separate images
 # --------------------------------------------------------------------------
+MAX_GAP_DARK_FRACTION = 0.02   # a column/row counts as a "gap" only if this
+                                # small a fraction of its pixels are dark —
+                                # far more robust than averaging brightness,
+                                # since a single stray dark pixel (anti-
+                                # aliasing, noise) can't drag a real gap below
+                                # threshold the way it can drag a mean down.
+DARK_PIXEL_LEVEL = WHITE_THRESHOLD - 60
+
+
 def _find_gap_columns(gray: np.ndarray) -> np.ndarray:
-    """Computes column-wise mean brightness and returns a boolean mask
-    marking which columns are a 'white gap'."""
-    col_means = gray.mean(axis=0)
-    return col_means > WHITE_THRESHOLD
+    """Returns a boolean mask marking which columns are a real whitespace
+    'gap', based on the FRACTION of dark pixels in each column rather than
+    mean brightness (fraction-based is far less sensitive to a few stray
+    dark pixels bleeding a mean below WHITE_THRESHOLD)."""
+    dark = gray < DARK_PIXEL_LEVEL
+    dark_fraction = dark.mean(axis=0)
+    return dark_fraction <= MAX_GAP_DARK_FRACTION
 
 
 def _trim_content_rows(gray: np.ndarray) -> tuple[int, int]:
@@ -141,10 +153,15 @@ def _trim_content_rows(gray: np.ndarray) -> tuple[int, int]:
     dark_mask = gray < (WHITE_THRESHOLD - 60)
     row_density = dark_mask.sum(axis=1) / max(1, w)
 
-    # Find the first run of MIN_RUN consecutive dense rows. Image content has
-    # long dense stretches; text rows are short isolated dense strokes.
-    DENSITY_THRESHOLD = 0.30
-    MIN_RUN = 15
+    # Find the first run of MIN_RUN consecutive dense rows. Real image/plot
+    # content (e.g. a dark chart background) stays dense for a LONG,
+    # unbroken stretch. A few lines of bold/monospace header text (e.g.
+    # print() output above a chart) can also hit a moderate density for a
+    # short run, but rarely holds it for this many consecutive rows without
+    # a clean blank-line gap — so a high MIN_RUN reliably skips past header
+    # text instead of mistaking it for the real content block.
+    DENSITY_THRESHOLD = 0.45
+    MIN_RUN = 40
     is_dense = row_density >= DENSITY_THRESHOLD
 
     start_y = 0
@@ -415,9 +432,10 @@ def split_grid_image(image_path: Path) -> list[tuple[Path, str]]:
     col_gap_mask = _find_gap_columns(content_band)
     col_segments = _segments_from_gap_mask(col_gap_mask)
 
-    # Try vertical (row) splits as well.
-    row_means = gray.mean(axis=1)
-    row_gap_mask = row_means > WHITE_THRESHOLD
+    # Try vertical (row) splits as well — same fraction-based test as columns.
+    row_dark = gray < DARK_PIXEL_LEVEL
+    row_dark_fraction = row_dark.mean(axis=1)
+    row_gap_mask = row_dark_fraction <= MAX_GAP_DARK_FRACTION
     row_segments = _segments_from_gap_mask(row_gap_mask)
 
     # Pick whichever gives more segments (more useful for grid images).
@@ -428,7 +446,18 @@ def split_grid_image(image_path: Path) -> list[tuple[Path, str]]:
         segments = row_segments
         horizontal = False
     else:
-        # nothing worth splitting, keep the original image
+        # Nothing worth splitting into multiple parts. Even so, the returned
+        # image must NEVER carry leading/trailing text baked into it (e.g. a
+        # print()/suptitle header sitting above a single chart that itself
+        # has no internal columns to split). Strip any such text band using
+        # the same row-trim used for individual crops, so the saved image is
+        # pure picture content either way.
+        y0, y1 = content_y0, content_y1
+        if y1 > y0 and (y1 - y0) < gray.shape[0] - 4:
+            trimmed = img.crop((0, y0, img.width, y1))
+            out_path = image_path.with_name(f"{image_path.stem}_trimmed{image_path.suffix}")
+            trimmed.save(out_path)
+            return [(out_path, "")]
         return [(image_path, "")]
 
     # Sanity check: if any candidate segment is unreasonably narrow, this

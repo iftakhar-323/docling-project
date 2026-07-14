@@ -891,20 +891,18 @@ x ()
 
 dabamrp The output of tue logistic regressin is a Sigmoid curve. there are onry 2 Possizk value to make our predictimi fse
 
-Probabilit  
-1  
-0<d  
-outcome=(1)(trne)  
+**Part 1**
+Probabili  
+Probalility >0.5  
+outcome=(1)(Trne)  
 s-curue  
-thresho'dvalue20.5  
-0.5  
-Probability <015  
-5xs+  
-outcome =0 (False)  
+—-thresho'dvalue20.5  
+0.5-  
+**Part 2**
+<0.5  
+outcome = o (False)  
 5  
-3  
-78  
-4  
+7  
 
 →x
 
@@ -919,54 +917,52 @@ BA obblA!Nd
 
 9上
 
-(9)Handwrciting  
-recognition - matched ore not matched.  
+**Part 1**
+(9)Handeriting  
+非  
 Linearc  
-bLogistic  
-(4) Models data using  
-mumeric. value.  
-values.  
-® Linearc reelationship beth  
-(2) Not reeqairced.  
+(4) Models data using continiour  
+mumercic. Value.  
+②Lineare relationship beth  
 dependent & independent  
-varciable is reequirced,  
-(3) The Probability is  
-(③) the data is modelled usikg  
-rcepreserted as a linearfunction  
-a straight line.  
-(D Independent varcables  
-(A) Must be correlated  
+varciable is rcequirced,  
+(3) the data is modelled usito  
+a straight line .  
+(④D) Independent varciables  
 Can be correlated with  
-with eacrother.  
 eacn other.  
-Logistic regresslon ean:  
-5) Lineare Feegressin equation  
-5)  
-P  
-J=xotd1x  
-in  
-20+01℃  
--  
-6  
-1  
-Q  
-↑  
-(3)  
-1  
-.3  
-0.5  
+(5) Lineare reegression equatin  
+J=xo+d1x  
+6)|x<y<α  
 2  
-一  
-0  
-0  
+1  
 2  
-3  
-8.Erronrminimizatian  
-(8) Error miniznizatin  
-techniane..  
+(8) Error miniznization  
 fcchnique:  
-logistic loss function.  
-leont square metnod  
+leant square metnod  
+**Part 2**
+matched ore not matched.  
+Logistic  
+(4) Models data, using binarcy  
+values.  
+2) wot reeqairced.  
+(3) The Probability is  
+reepresented as a linear funct  
+(A) Must be correlated  
+with eacr other.  
+(5) Logistic regresslen ean:  
+P  
+in  
+=20+91℃  
+-  
+Q  
+ρ ≤ 1  
+1  
+0.5  
+0  
+8.Errorminimizatian  
+techniane.  
+logistic loss function  
 
 ## Linear Regression!
 
