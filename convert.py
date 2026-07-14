@@ -83,16 +83,17 @@ def _safe_stem(stem: str, max_len: int = 80) -> str:
 
 def convert_documents(input_dir: Path, output_dir: Path, converter: DocumentConverter) -> list[Path]:
     """Converts every supported file in input_dir and saves the per-file markdowns
-    into a temporary staging directory (`<output_dir>/.staging/`). The final
-    `output_dir/` only ever ends up containing `README.md` (which embeds the
-    merged `combined.md`), the shared image folder, and (briefly) per-file
-    artifacts that get consolidated away.
+    directly into `output_dir/`. The companion `<stem>_artifacts/` directory
+    that Docling creates next to each .md is later moved into a single shared
+    `all_images/` folder by `consolidate_images_for_merge`.
 
-    Returns the list of generated .md file paths (inside the staging dir).
+    The per-file .md files are then moved into a `.staging/` subfolder so the
+    final `output_dir/` only ever contains `README.md` + `all_images/`.
+
+    Returns the list of generated .md file paths (they live in output_dir/ at
+    this point; the caller is expected to move them into .staging/ later).
     """
     output_dir.mkdir(parents=True, exist_ok=True)
-    staging_dir = output_dir / ".staging"
-    staging_dir.mkdir(parents=True, exist_ok=True)
     generated_md_files = []
 
     for file in sorted(input_dir.glob("*")):
@@ -105,7 +106,7 @@ def convert_documents(input_dir: Path, output_dir: Path, converter: DocumentConv
         # Use a length-safe stem to avoid Linux's 255-byte filename cap when
         # Docling later tries to make `<stem>_artifacts/`.
         safe = _safe_stem(file.stem)
-        md_out = staging_dir / f"{safe}.md"
+        md_out = output_dir / f"{safe}.md"
         result.document.save_as_markdown(md_out, image_mode=ImageRefMode.REFERENCED)
 
         print(f"[convert] ✔ {file.name} → {md_out.name}")
@@ -810,6 +811,12 @@ def find_images_dir_for(md_path: Path) -> Path:
     """Docling usually stores images in a '<stem>_artifacts' or similar folder.
     Searches both the markdown's parent directory and a nested OUTPUT_DIR sub-
     directory (some Docling versions nest artifacts under output_md/output_md/).
+
+    As a last resort, walks under md_path.parent looking for any directory
+    whose name matches the per-file artifact pattern — this catches the
+    deeply-nested `output_md/.staging/output_md/.staging/<stem>_artifacts/`
+    shape Docling produces when the markdown is saved inside a `.staging/`
+    subdirectory.
     """
     output_dir = Path(OUTPUT_DIR)
     candidates = [
@@ -828,6 +835,20 @@ def find_images_dir_for(md_path: Path) -> Path:
         seen.add(c)
         if c.exists():
             return c
+
+    # Deep fallback: search recursively under md_path.parent for any directory
+    # whose name begins with the stem and ends with `_artifacts` or `_images`.
+    suffixes = ("_artifacts", "_images")
+    if md_path.parent.exists():
+        for child in md_path.parent.rglob("*"):
+            if not child.is_dir():
+                continue
+            if child.name in seen:
+                continue
+            seen.add(child.name)
+            if child.name.startswith(md_path.stem) and child.name.endswith(suffixes):
+                return child
+
     return candidates[0]  # default guess, treated as empty if it doesn't exist
 
 
@@ -849,6 +870,7 @@ def consolidate_images_for_merge(md_files: list[Path]) -> tuple[Path, dict[Path,
     output_dir = Path(OUTPUT_DIR)
     shared_dir = output_dir / COMBINED_IMAGES_DIR
     shared_dir.mkdir(parents=True, exist_ok=True)
+    print(f"[images] Shared image folder ready at {shared_dir}")
 
     # Track which files we copied so split-image outputs (which are written
     # later into the same per-file _artifacts/ folder) end up here too.
@@ -1018,6 +1040,17 @@ def main():
         update_markdown_with_splits(md_path, split_mapping)
         strip_code_blocks_near_images(md_path)
 
+    # Once everything is processed, move the per-file .md files into a
+    # hidden .staging/ subfolder so we can stitch them together without
+    # cluttering the final output_md/.
+    import shutil
+    staging = output_dir / ".staging"
+    staging.mkdir(parents=True, exist_ok=True)
+    for md_path in md_files:
+        shutil.move(str(md_path), str(staging / md_path.name))
+    # Re-point md_files at their new locations.
+    md_files = [staging / md_path.name for md_path in md_files]
+
     # Stitch every per-file .md into one combined.md, then expose that
     # combined document inside output_md/ as a single README.md so the
     # output folder only ever contains README.md + the shared image folder.
@@ -1031,14 +1064,12 @@ def main():
         print(f"[merge] {readme_path.name} written (embeds {combined_path.name})")
 
         # Now that the merge is done, the per-file .md files are no longer
-        # needed in the final output. Delete them from the staging dir.
-        import shutil
-        staging = output_dir / ".staging"
-        if staging.exists():
-            shutil.rmtree(staging)
+        # needed in the final output. Delete the staging dir.
+        shutil.rmtree(staging)
 
         # The combined.md file is also redundant once README.md holds its
-        # contents — remove it so the output folder only has README.md.
+        # contents — remove it so the output folder only has README.md
+        # plus all_images/.
         if combined_path.exists():
             combined_path.unlink()
 

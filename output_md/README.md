@@ -113,8 +113,11 @@ delay(1000);
 
 Circuit Diagram:
 
-**image_000000_52910f2c974e81326414a3bcc4357435c697cfa938666558b44f2be9acdee8be.png**
-![Image](.staging/Lab_Report_02_CSE438_artifacts/image_000000_52910f2c974e81326414a3bcc4357435c697cfa938666558b44f2be9acdee8be.png)
+**Lab_Report_02_CSE438__image_000000_52910f2c974e81326414a3bcc4357435c697cfa938666558b44f2be9acdee8be.png**
+![Image](all_images/Lab_Report_02_CSE438__image_000000_52910f2c974e81326414a3bcc4357435c697cfa938666558b44f2be9acdee8be.png)
+
+MEGA 2560  
+DrarTA  
 
 Output:
 
@@ -194,8 +197,11 @@ delay(2000);
 
 Circuit Diagram:
 
-**image_000001_03d432f39a2664f92e35b7c201e9a9c04cb51cb42d17be825a2eb147879850e3.png**
-![Image](.staging/Lab_Report_02_CSE438_artifacts/image_000001_03d432f39a2664f92e35b7c201e9a9c04cb51cb42d17be825a2eb147879850e3.png)
+**Lab_Report_02_CSE438__image_000001_03d432f39a2664f92e35b7c201e9a9c04cb51cb42d17be825a2eb147879850e3.png**
+![Image](all_images/Lab_Report_02_CSE438__image_000001_03d432f39a2664f92e35b7c201e9a9c04cb51cb42d17be825a2eb147879850e3.png)
+
+ao  
+CC SDA T  
 
 Output:
 
@@ -271,8 +277,10 @@ delay(2000);
 
 Circuit Diagram:
 
-**image_000002_a5b667e3d9c32f22642880f60eb3f1b6e147f6901d02c474f37858185adfe8f4.png**
-![Image](.staging/Lab_Report_02_CSE438_artifacts/image_000002_a5b667e3d9c32f22642880f60eb3f1b6e147f6901d02c474f37858185adfe8f4.png)
+**Lab_Report_02_CSE438__image_000002_a5b667e3d9c32f22642880f60eb3f1b6e147f6901d02c474f37858185adfe8f4.png**
+![Image](all_images/Lab_Report_02_CSE438__image_000002_a5b667e3d9c32f22642880f60eb3f1b6e147f6901d02c474f37858185adfe8f4.png)
+
+HHE  
 
 Output:
 
@@ -332,8 +340,13 @@ delay(2000);
 
 Circuit Diagram:
 
-**image_000003_94e01aecf3cf0804f34e665ad6e5e9475470dbc411ae9b0e52f43bf5e09817cf.png**
-![Image](.staging/Lab_Report_02_CSE438_artifacts/image_000003_94e01aecf3cf0804f34e665ad6e5e9475470dbc411ae9b0e52f43bf5e09817cf.png)
+**Lab_Report_02_CSE438__image_000003_94e01aecf3cf0804f34e665ad6e5e9475470dbc411ae9b0e52f43bf5e09817cf.png**
+![Image](all_images/Lab_Report_02_CSE438__image_000003_94e01aecf3cf0804f34e665ad6e5e9475470dbc411ae9b0e52f43bf5e09817cf.png)
+
+seL  
+50A  
+Andin  
+E,s0  
 
 Output:
 
@@ -401,8 +414,11 @@ delay(2000);
 
 Circuit Diagram:
 
-**image_000004_393afd05d29ec7264ba37c480c96dfe5a4a8623123df4b7f3a59aaa90f289036.png**
-![Image](.staging/Lab_Report_02_CSE438_artifacts/image_000004_393afd05d29ec7264ba37c480c96dfe5a4a8623123df4b7f3a59aaa90f289036.png)
+**Lab_Report_02_CSE438__image_000004_393afd05d29ec7264ba37c480c96dfe5a4a8623123df4b7f3a59aaa90f289036.png**
+![Image](all_images/Lab_Report_02_CSE438__image_000004_393afd05d29ec7264ba37c480c96dfe5a4a8623123df4b7f3a59aaa90f289036.png)
+
+SeL  
+2010578  
 
 Output:
 
@@ -559,8 +575,8 @@ import cv2 import numpy as np import matplotlib.pyplot as plt image_path�
 
 ## Original Grayscale Image
 
-**image_000000_18bf7451bd2650cc0b63c7659d15ae4f1b381866c7f785ab98fcd22ee146f8bf.png**
-![Image](output_md/.staging/dip1_artifacts/image_000000_18bf7451bd2650cc0b63c7659d15ae4f1b381866c7f785ab98fcd22ee146f8bf.png)
+**dip1__image_000000_18bf7451bd2650cc0b63c7659d15ae4f1b381866c7f785ab98fcd22ee146f8bf.png**
+![Image](all_images/dip1__image_000000_18bf7451bd2650cc0b63c7659d15ae4f1b381866c7f785ab98fcd22ee146f8bf.png)
 
 5  
 
@@ -619,8 +635,8 @@ This experiment evaluates the effect of varying Gaussian blur kernel sizes on ed
 BEST_FILTER = 'sobel' FIXED_SIGMA = 1.0
 ```
 
-**image_000002_88f56ae1b1c542bdc2f7dfcfa596deedff49ecb868129a11429e95b78d4f7b82.png**
-![Image](output_md/.staging/dip1_artifacts/image_000002_88f56ae1b1c542bdc2f7dfcfa596deedff49ecb868129a11429e95b78d4f7b82.png)
+**dip1__image_000002_88f56ae1b1c542bdc2f7dfcfa596deedff49ecb868129a11429e95b78d4f7b82.png**
+![Image](all_images/dip1__image_000002_88f56ae1b1c542bdc2f7dfcfa596deedff49ecb868129a11429e95b78d4f7b82.png)
 
 Canny Edge Detection: Gaussian Kernel Size Comparison (Sobel Filter)  
 Kernel Size: 3x3  
@@ -631,8 +647,8 @@ Kernel Size: 7x7
 
 The impact of the sigma value (standard deviation of the Gaussian blur) on edge detection is investigated. A kernel size of 5x5 (selected from previous experiments for its balanced performance) is used, with fixed thresholds. Sigma values of 0.5, 1.0, and 1.5 are evaluated.
 
-**image_000003_1b2f0ecbd658fe2501663cad87e9b1d7f5a468eff25ff8376c0c2ad447a07d1c.png**
-![Image](output_md/.staging/dip1_artifacts/image_000003_1b2f0ecbd658fe2501663cad87e9b1d7f5a468eff25ff8376c0c2ad447a07d1c.png)
+**dip1__image_000003_1b2f0ecbd658fe2501663cad87e9b1d7f5a468eff25ff8376c0c2ad447a07d1c.png**
+![Image](all_images/dip1__image_000003_1b2f0ecbd658fe2501663cad87e9b1d7f5a468eff25ff8376c0c2ad447a07d1c.png)
 
 plt.show()  
 Canny Edge Detection: Sigma Value Comparison (Sobel Filter)  
@@ -644,8 +660,8 @@ Sigma: 1.0
 
 This section explores the effect of varying low\_threshold and high\_threshold values, which are critical for determining strong and weak edges. The previously identified optimal kernel\_size and sigma values are maintained. Threshold pairs (0.03, 0.09), (0.05, 0.11), and (0.08, 0.16) are tested. Note that the custom Canny functions expect thresholds in the 0-255 range, necessitating scaling of the provided 0-1 range values.
 
-**image_000004_2e625d801c33b7155ee659cab4e48241db57b559175f46f7d5808fadbe992aa6.png**
-![Image](output_md/.staging/dip1_artifacts/image_000004_2e625d801c33b7155ee659cab4e48241db57b559175f46f7d5808fadbe992aa6.png)
+**dip1__image_000004_2e625d801c33b7155ee659cab4e48241db57b559175f46f7d5808fadbe992aa6.png**
+![Image](all_images/dip1__image_000004_2e625d801c33b7155ee659cab4e48241db57b559175f46f7d5808fadbe992aa6.png)
 
 Original relative threshold pairs: [(0.03, 0.09), (0.05, 0.11), (0.08, 0.16)]  
 Scaled absolute threshold pairs (low, high): [(7, 22), (12, 28), (20, 40)]  
@@ -670,8 +686,8 @@ High Threshold: 28 (relative ~0.11)
 
 Final Best Edge Map (Optimum Parameters)
 
-**image_000005_6e5b120aad826372e366096ae820fe295881cdcbdc3edaaa6994a5b6a66fd306.png**
-![Image](output_md/.staging/dip1_artifacts/image_000005_6e5b120aad826372e366096ae820fe295881cdcbdc3edaaa6994a5b6a66fd306.png)
+**dip1__image_000005_6e5b120aad826372e366096ae820fe295881cdcbdc3edaaa6994a5b6a66fd306.png**
+![Image](all_images/dip1__image_000005_6e5b120aad826372e366096ae820fe295881cdcbdc3edaaa6994a5b6a66fd306.png)
 
 
 ---
@@ -795,8 +811,8 @@ Now, error=
 
 n-2
 
-**image_000002_d9d0b8e98957249d3c8c4af2407bb20a61dd5687a737e50d404a6aef419a9075.png**
-![Image](output_md/.staging/english_artifacts/image_000002_d9d0b8e98957249d3c8c4af2407bb20a61dd5687a737e50d404a6aef419a9075.png)
+**english__image_000002_d9d0b8e98957249d3c8c4af2407bb20a61dd5687a737e50d404a6aef419a9075.png**
+![Image](all_images/english__image_000002_d9d0b8e98957249d3c8c4af2407bb20a61dd5687a737e50d404a6aef419a9075.png)
 
 5  
 4  
