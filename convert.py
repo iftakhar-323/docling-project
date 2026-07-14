@@ -82,9 +82,17 @@ def _safe_stem(stem: str, max_len: int = 80) -> str:
 
 
 def convert_documents(input_dir: Path, output_dir: Path, converter: DocumentConverter) -> list[Path]:
-    """Converts every supported file in input_dir and saves it as markdown in output_dir.
-    Returns the list of generated .md file paths."""
+    """Converts every supported file in input_dir and saves the per-file markdowns
+    into a temporary staging directory (`<output_dir>/.staging/`). The final
+    `output_dir/` only ever ends up containing `README.md` (which embeds the
+    merged `combined.md`), the shared image folder, and (briefly) per-file
+    artifacts that get consolidated away.
+
+    Returns the list of generated .md file paths (inside the staging dir).
+    """
     output_dir.mkdir(parents=True, exist_ok=True)
+    staging_dir = output_dir / ".staging"
+    staging_dir.mkdir(parents=True, exist_ok=True)
     generated_md_files = []
 
     for file in sorted(input_dir.glob("*")):
@@ -97,7 +105,7 @@ def convert_documents(input_dir: Path, output_dir: Path, converter: DocumentConv
         # Use a length-safe stem to avoid Linux's 255-byte filename cap when
         # Docling later tries to make `<stem>_artifacts/`.
         safe = _safe_stem(file.stem)
-        md_out = output_dir / f"{safe}.md"
+        md_out = staging_dir / f"{safe}.md"
         result.document.save_as_markdown(md_out, image_mode=ImageRefMode.REFERENCED)
 
         print(f"[convert] ✔ {file.name} → {md_out.name}")
@@ -990,6 +998,10 @@ def main():
         if shared.exists():
             import shutil
             shutil.rmtree(shared)
+        staging = output_dir / ".staging"
+        if staging.exists():
+            import shutil
+            shutil.rmtree(staging)
 
     converter = build_converter()
     md_files = convert_documents(input_dir, output_dir, converter)
@@ -1006,10 +1018,29 @@ def main():
         update_markdown_with_splits(md_path, split_mapping)
         strip_code_blocks_near_images(md_path)
 
-    # Stitch every per-file .md into one combined.md.
+    # Stitch every per-file .md into one combined.md, then expose that
+    # combined document inside output_md/ as a single README.md so the
+    # output folder only ever contains README.md + the shared image folder.
     if md_files:
         combined_path = output_dir / COMBINED_MD_NAME
         merge_markdown_files(md_files, combined_path)
+
+        readme_path = output_dir / "README.md"
+        readme_body = combined_path.read_text(encoding="utf-8")
+        readme_path.write_text(readme_body, encoding="utf-8")
+        print(f"[merge] {readme_path.name} written (embeds {combined_path.name})")
+
+        # Now that the merge is done, the per-file .md files are no longer
+        # needed in the final output. Delete them from the staging dir.
+        import shutil
+        staging = output_dir / ".staging"
+        if staging.exists():
+            shutil.rmtree(staging)
+
+        # The combined.md file is also redundant once README.md holds its
+        # contents — remove it so the output folder only has README.md.
+        if combined_path.exists():
+            combined_path.unlink()
 
     print("\n✔ All done. Check the output_md/ folder.")
 
