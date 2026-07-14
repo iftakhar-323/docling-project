@@ -4,7 +4,8 @@ PDF/PPTX/DOCX -> Markdown converter (Docling based)
 - Converts every pdf/pptx/docx file in input_docs/ into a markdown file in output_md/
 - Combined grid images (e.g. "3 subplots merged into one image") are automatically
   split into separate images, if there is a clear whitespace gap between subplots
-- The markdown file is updated so each split image is referenced on its own line
+- The markdown file is updated so each split image is referenced on its own line,
+  IMAGE FIRST, then its name/caption directly below it (never above, never inside).
 - NEW: Every image (split or not) is also run through full-page OCR (RapidOCR),
   and the extracted text is written into the markdown directly below the image,
   so handwritten / printed text inside images becomes real, searchable text —
@@ -461,7 +462,7 @@ def split_grid_image(image_path: Path) -> list[tuple[Path, str]]:
     # this here, before cropping, because the trim step below intentionally
     # removes any text band from the saved file — once trimmed, the title is
     # gone from the image and OCR can't recover it. So we capture the title
-    # text up front and emit it as a markdown line above each image instead.
+    # text up front and emit it as a markdown line below each image instead.
     segment_titles: list[str] = []
     if engine is not None:
         # Detect the title-band row range once on the full image: rows with
@@ -554,7 +555,7 @@ def split_grid_image(image_path: Path) -> list[tuple[Path, str]]:
 
         # Trim out any stray title/OCR text that bleeds into the part. The
         # per-subplot title has already been captured above (segment_titles)
-        # and will be emitted as a markdown line above each image, so the
+        # and will be emitted as a markdown line below each image, so the
         # saved image file itself stays free of text artefacts.
         cropped_gray = np.array(cropped.convert("L"))
         y0, y1 = _trim_content_rows(cropped_gray)
@@ -624,9 +625,9 @@ def process_images_dir(images_dir: Path) -> dict[str, list[tuple[Path, str]]]:
 
 
 # --------------------------------------------------------------------------
-# STEP 3: Update the markdown file so each image line is preceded by the
-#         image filename as a caption, and split images appear on their
-#         own lines. Each image is now ALSO followed by its full OCR'd text.
+# STEP 3: Update the markdown file so each split image appears on its own
+#         line, IMAGE FIRST, followed directly by its name/caption BELOW it
+#         (never above, never inside the image itself).
 # --------------------------------------------------------------------------
 def _text_as_markdown_lines(extracted: str) -> list[str]:
     """Formats OCR'd text as plain, readable markdown lines (hard line breaks
@@ -652,8 +653,9 @@ def _format_image_block(prefix: str, sp: Path, title: str, idx: int) -> list[str
        its extracted text is emitted, so the same text never lives solely
        inside a picture.
     2. DIAGRAM/CHART (low text coverage, e.g. a plot with a small title): the
-       image is KEPT, and any OCR'd text (title, axis labels, etc.) is still
-       emitted below it as real markdown text — nothing stays image-only.
+       image is KEPT — image first, then its caption directly BELOW it, then
+       any further OCR'd text (title, axis labels, etc.) below that. Nothing
+       is ever placed above or inside the image.
     """
     name = sp.name
     label = title or f"Part {idx}"
@@ -668,10 +670,11 @@ def _format_image_block(prefix: str, sp: Path, title: str, idx: int) -> list[str
         lines.extend(_text_as_markdown_lines(extracted))
         return lines
 
-    # Diagram/chart: image first, then any title/text found on/near it —
-    # title goes BELOW the image as real text, never inside the image.
-    lines.append(f"**{name}**")
+    # Diagram/chart: image FIRST, then its caption/name BELOW it, then any
+    # extra title/text found on/near it — nothing ever goes above or inside
+    # the image.
     lines.append(f"![{label}]({prefix}{name})")
+    lines.append(f"**{name}**")
     if title:
         lines.append(title)
     if extracted:
@@ -684,11 +687,12 @@ def _format_image_block(prefix: str, sp: Path, title: str, idx: int) -> list[str
 def update_markdown_with_splits(md_path: Path, split_mapping: dict[str, list[tuple[Path, str]]]) -> None:
     """For every image referenced in the markdown:
     - If it was split into parts, replace the single line with one block per
-      part (each block = caption line + image line + extracted OCR text).
-    - Otherwise, prepend a caption line (the image filename) above the line,
-      and append the image's full OCR'd text below it.
-    This ensures each image has its filename visible as text above it, the
-    image itself stays free of in-image text artefacts, and the actual
+      part (each block = image line, THEN caption line, THEN extracted OCR
+      text).
+    - Otherwise, keep the image line as-is and add the caption (the image
+      filename) directly BELOW it, followed by the image's full OCR'd text.
+    This ensures each image has its filename visible as text right below it,
+    the image itself stays free of in-image text artefacts, and the actual
     handwritten/printed content is captured as real markdown text.
     """
     content = md_path.read_text(encoding="utf-8")
@@ -725,10 +729,11 @@ def update_markdown_with_splits(md_path: Path, split_mapping: dict[str, list[tup
                     # picture, keep only the extracted text.
                     new_lines.extend(_text_as_markdown_lines(extracted))
                 else:
-                    # Diagram/chart (or no text at all): keep the image,
-                    # caption it, and still surface any OCR'd text below it.
-                    new_lines.append(f"**{image_filename}**")
+                    # Diagram/chart (or no text at all): keep the image line
+                    # as-is, then caption it directly BELOW, then still
+                    # surface any OCR'd text below that.
                     new_lines.append(line)
+                    new_lines.append(f"**{image_filename}**")
                     if extracted:
                         new_lines.append("")
                         new_lines.extend(_text_as_markdown_lines(extracted))
@@ -741,62 +746,55 @@ def update_markdown_with_splits(md_path: Path, split_mapping: dict[str, list[tup
 
 
 def strip_code_blocks_near_images(md_path: Path) -> None:
-    """Removes OCR'd ```code blocks``` that sit just before a caption line
-    (e.g. ````...```` immediately followed by blank line and our inserted
-    `**filename.png**` caption). Leaves real prose intact — only fenced code
-    blocks are removed, never paragraph text. Does NOT touch the
-    `_Extracted text:_` ```text``` blocks we add ourselves (those are always
-    preceded by an image line, not a caption line, so they're never matched
-    by the backward-scan below)."""
+    """Removes OCR'd ```code blocks``` that sit just before an IMAGE line
+    (e.g. ````...```` immediately followed by blank line and our ![...]
+    image reference). Leaves real prose intact — only fenced code blocks are
+    removed, never paragraph text. Does NOT touch the `_Extracted text:_`
+    ```text``` blocks we add ourselves (those always sit after an image +
+    caption, never directly before an image line, so they're never matched
+    by the backward-scan below).
+
+    NOTE: captions now live BELOW each image, so the code-block cleanup has
+    to anchor on the image line itself, not the caption line."""
     content = md_path.read_text(encoding="utf-8")
     lines = content.splitlines()
 
-    # Find caption line indices: `**...png**` lines we just inserted.
-    def is_caption(s: str) -> bool:
-        st = s.strip()
-        return st.startswith("**") and st.endswith("**") and ".png" in st
-
-    # Find indices of image lines.
+    # Find image line indices: our own `![...](...)` references.
     def is_image(s: str) -> bool:
         return s.strip().startswith("![")
 
     removed = 0
     new_lines: list[str] = []
     n = len(lines)
-    skip_until = -1  # set to index k after we delete a block, to skip pre-recorded lines
 
     i = 0
     while i < n:
-        if i <= skip_until:
-            i += 1
-            continue
-
         new_lines.append(lines[i])
 
-        # If this line is a caption, look at the lines just before it. If they
-        # form a ``` fenced block ```, drop the whole block (opening fence
-        # through closing fence).
-        if is_caption(lines[i]):
+        # If this line is an image reference, look at the lines just before
+        # it. If they form a ``` fenced block ```, drop the whole block
+        # (opening fence through closing fence) so leftover code/print()
+        # output never sits directly above the picture.
+        if is_image(lines[i]):
             # Walk backward through blanks to find the line right before.
-            j = len(new_lines) - 2  # new_lines already includes caption at -1
+            j = len(new_lines) - 2  # new_lines already includes image at -1
             while j >= 0 and new_lines[j].strip() == "":
                 j -= 1
             if j >= 0 and new_lines[j].strip().startswith("```"):
                 # That's a closing fence. Walk back to find the matching opening fence.
                 closing = j
                 k = j - 1
+                opening = -1
                 while k >= 0:
                     if new_lines[k].strip().startswith("```"):
                         opening = k
                         break
                     k -= 1
-                else:
-                    opening = -1
                 if opening >= 0:
                     # Drop everything from opening through closing inclusive
-                    # (and any blanks between closing and caption).
+                    # (and any blanks between closing and the image line).
                     del new_lines[opening:]
-                    # Re-append the caption (which we already added).
+                    # Re-append the image line (which we already added).
                     new_lines.append(lines[i])
                     removed += 1
 
