@@ -10,12 +10,19 @@ PDF/PPTX/DOCX -> Markdown converter (Docling based)
   and the extracted text is written into the markdown directly below the image,
   so handwritten / printed text inside images becomes real, searchable text —
   not just an embedded picture.
+- NEW (border-tight crop): every saved image — split part OR single/unsplit —
+  is now cropped tightly to its own real content border (all 4 sides), so no
+  surrounding whitespace or nearby page text ever bleeds into the picture.
+  Text is only ever attached to an image if it was detected *inside* that
+  image's own tight border; text sitting outside the border is page text and
+  is left as plain markdown text (never pulled into / never used to justify
+  keeping it glued to the picture).
 """
 
 from pathlib import Path
 
 import numpy as np
-from PIL import Image
+from PIL import Image, ImageOps
 
 from docling.document_converter import DocumentConverter, PdfFormatOption
 from docling.datamodel.pipeline_options import PdfPipelineOptions
@@ -53,6 +60,14 @@ OCR_MIN_CONFIDENCE = 0.0    # RapidOCR score threshold below which a line is dro
 # lives solely inside a picture. Diagrams/charts (low text coverage) keep
 # the image AND get their text (e.g. a title) appended below as real text.
 TEXT_IMAGE_COVERAGE_THRESHOLD = 0.12
+
+# --- Tight border-crop tuning ---------------------------------------------
+# A pixel counts as "content" (not blank background) if it's darker than
+# this level. Used to find the image's true bounding box on all 4 sides.
+BORDER_DARK_LEVEL = WHITE_THRESHOLD - 60
+# Extra pixels of pure white padding kept around the tight content bbox, so
+# the crop doesn't shave lines/strokes sitting exactly on the edge.
+BORDER_CROP_PAD = 4
 
 
 # --------------------------------------------------------------------------
@@ -213,6 +228,50 @@ def _trim_content_rows(gray: np.ndarray) -> tuple[int, int]:
 
 
 # --------------------------------------------------------------------------
+# NEW: tight border-bbox crop (all 4 sides), applied to EVERY saved image —
+# split part or single/unsplit — as the final step before the file is
+# written to disk. This guarantees the saved picture never carries blank
+# margin or neighbouring page content past its own true content edge.
+# --------------------------------------------------------------------------
+def _tight_content_bbox(gray: np.ndarray) -> tuple[int, int, int, int]:
+    """Returns (x0, y0, x1, y1): the tight bounding box of non-background
+    (dark) pixels in `gray`, padded by BORDER_CROP_PAD and clamped to the
+    image bounds. If no dark pixel is found, returns the full image bbox
+    unchanged (nothing to crop)."""
+    h, w = gray.shape
+    dark = gray < BORDER_DARK_LEVEL
+    if not dark.any():
+        return 0, 0, w, h
+
+    ys = np.where(dark.any(axis=1))[0]
+    xs = np.where(dark.any(axis=0))[0]
+    y0, y1 = int(ys[0]), int(ys[-1]) + 1
+    x0, x1 = int(xs[0]), int(xs[-1]) + 1
+
+    y0 = max(0, y0 - BORDER_CROP_PAD)
+    x0 = max(0, x0 - BORDER_CROP_PAD)
+    y1 = min(h, y1 + BORDER_CROP_PAD)
+    x1 = min(w, x1 + BORDER_CROP_PAD)
+    return x0, y0, x1, y1
+
+
+def tight_crop_to_border(img: Image.Image) -> Image.Image:
+    """Crops `img` tightly to its own real content border on all 4 sides.
+    This is the final pass applied to every saved image (after any row/
+    column trimming already done for split parts) so nothing outside the
+    picture's own edge — blank canvas, a neighbouring subplot's sliver,
+    page text sitting just outside the figure — ever survives into the
+    saved file."""
+    gray = np.array(img.convert("L"))
+    x0, y0, x1, y1 = _tight_content_bbox(gray)
+    if x1 <= x0 or y1 <= y0:
+        return img
+    if (x0, y0, x1, y1) == (0, 0, img.width, img.height):
+        return img
+    return img.crop((x0, y0, x1, y1))
+
+
+# --------------------------------------------------------------------------
 # NEW: Full-image OCR (extracts ALL text in an image, not just a title band)
 # --------------------------------------------------------------------------
 _OCR_ENGINE = None  # lazy singleton so we only construct RapidOCR once
@@ -250,7 +309,14 @@ def _polygon_area(pts) -> float:
 
 def ocr_image_full(image_path: Path) -> tuple[str, float]:
     """Runs OCR over the ENTIRE image (not just a title band) and returns
-    (extracted_text, text_coverage_ratio):
+    (extracted_text, text_coverage_ratio).
+
+    IMPORTANT: this is only ever called on an image file that has ALREADY
+    been tight-cropped to its own content border (see `tight_crop_to_border`
+    / `_tight_content_bbox`). Because of that, any text this finds is, by
+    construction, text that sits *inside* the image's own border — never
+    surrounding page text — so it is always safe to treat as "part of the
+    image".
 
     - extracted_text: recognized text as multi-line plain text, ordered
       top-to-bottom by each detection's vertical position (reading order).
@@ -259,9 +325,6 @@ def ocr_image_full(image_path: Path) -> tuple[str, float]:
       handwriting) has a HIGH ratio; a chart/diagram with just a small title
       has a LOW ratio. Used to decide whether to keep the image or drop it
       and keep only the text (see TEXT_IMAGE_COVERAGE_THRESHOLD).
-
-    Used so that handwritten/printed content inside an image is captured as
-    real, searchable markdown text instead of staying locked inside a picture.
 
     Returns ("", 0.0) if OCR is unavailable or finds no text.
     """
@@ -409,8 +472,13 @@ def split_grid_image(image_path: Path) -> list[tuple[Path, str]]:
 
     Returns a list of (split_image_path, title) tuples. The title is the OCR'd
     subplot title (e.g. "Thresholds: (0.03, 0.09)"), or "Part N" as fallback.
-    If splitting isn't possible (only 1 segment found in either direction),
-    returns the original image_path with an empty title wrapped in a tuple.
+
+    Every returned image file — split or not — is tight-cropped to its own
+    real content border on all 4 sides (see `tight_crop_to_border`) as the
+    LAST step before saving, so no whitespace margin or neighbouring content
+    survives into the saved picture. A brand-new file is always written (even
+    for the "nothing to split" case) so callers can tell a border-cropped
+    version was produced and update the markdown to point at it.
     """
     img = Image.open(image_path).convert("RGB")
     gray = np.array(img.convert("L"))
@@ -449,16 +517,19 @@ def split_grid_image(image_path: Path) -> list[tuple[Path, str]]:
         # Nothing worth splitting into multiple parts. Even so, the returned
         # image must NEVER carry leading/trailing text baked into it (e.g. a
         # print()/suptitle header sitting above a single chart that itself
-        # has no internal columns to split). Strip any such text band using
-        # the same row-trim used for individual crops, so the saved image is
-        # pure picture content either way.
+        # has no internal columns to split), and it must never carry blank
+        # margin past its own real border either. Trim rows first (drops any
+        # text band sitting above the picture), then tight-crop all 4 sides
+        # to the picture's own true content border.
         y0, y1 = content_y0, content_y1
         if y1 > y0 and (y1 - y0) < gray.shape[0] - 4:
-            trimmed = img.crop((0, y0, img.width, y1))
-            out_path = image_path.with_name(f"{image_path.stem}_trimmed{image_path.suffix}")
-            trimmed.save(out_path)
-            return [(out_path, "")]
-        return [(image_path, "")]
+            base = img.crop((0, y0, img.width, y1))
+        else:
+            base = img
+        cropped = tight_crop_to_border(base)
+        out_path = image_path.with_name(f"{image_path.stem}_trimmed{image_path.suffix}")
+        cropped.save(out_path)
+        return [(out_path, "")]
 
     # Sanity check: if any candidate segment is unreasonably narrow, this
     # isn't a real grid — it's a page with text columns / rows. Compare each
@@ -477,7 +548,12 @@ def split_grid_image(image_path: Path) -> list[tuple[Path, str]]:
                 f"{int(MIN_SEGMENT_RATIO * 100)}% of content span {content_extent}px — "
                 f"likely text spacing, not a real grid gap)"
             )
-            return [(image_path, "")]
+            # Still tight-crop the rejected image to its own border before
+            # handing it back, same as the "no split candidates" branch.
+            cropped = tight_crop_to_border(img)
+            out_path = image_path.with_name(f"{image_path.stem}_trimmed{image_path.suffix}")
+            cropped.save(out_path)
+            return [(out_path, "")]
 
     split_paths: list[tuple[Path, str]] = []
     stem = image_path.stem
@@ -597,13 +673,18 @@ def split_grid_image(image_path: Path) -> list[tuple[Path, str]]:
         if y1 - y0 > 20:
             cropped = cropped.crop((0, y0, cropped.width, y1))
 
+        # Tight-crop this part to its OWN real content border on all 4
+        # sides (left/right too, not just top/bottom) — removes any sliver
+        # of a neighbouring subplot or blank canvas that the column/row gap
+        # split left behind at the edges.
+        cropped = tight_crop_to_border(cropped)
+
         # Add a small white margin (pure padding, no text) for visual breathing
         # room — the title itself is never kept in the image anymore.
         cw, ch = cropped.size
-        top_pad = max(8, int(ch * 0.05))
-        bottom_pad = max(8, int(ch * 0.05))
+        top_pad = max(8, int(ch * 0.05)) if ch else 8
+        bottom_pad = max(8, int(ch * 0.05)) if ch else 8
         if cw > 0 and ch > 0:
-            from PIL import ImageOps
             cropped = ImageOps.expand(cropped, border=(0, top_pad, 0, bottom_pad), fill="white")
 
         # Use the per-subplot title we OCR'd up front (before trim removed the
@@ -624,19 +705,28 @@ def split_grid_image(image_path: Path) -> list[tuple[Path, str]]:
 
 def _is_already_split(img_file: Path) -> bool:
     """True if this PNG is itself a part produced by a previous split pass
-    (e.g. contains `_part1`, `_part2`). Used to avoid re-splitting when the
-    per-file processing loop runs against an already-shared folder."""
+    (e.g. contains `_part1`, `_part2`, or `_trimmed`). Used to avoid
+    re-splitting when the per-file processing loop runs against an
+    already-shared folder."""
     name = img_file.stem
     import re as _re
-    return bool(_re.search(r"_part\d+$", name))
+    return bool(_re.search(r"_part\d+$", name)) or name.endswith("_trimmed")
 
 
 def process_images_dir(images_dir: Path) -> dict[str, list[tuple[Path, str]]]:
-    """Checks every image in images_dir, splits it if applicable, and returns
-    a mapping: original_image_filename -> [(split_image_path, title), ...]
+    """Checks every image in images_dir, tight-crops/splits it, and returns
+    a mapping: original_image_filename -> [(processed_image_path, title), ...]
 
-    Skips images that look like they were already split (contain `_partN`)
-    so re-runs over a shared folder don't double-process."""
+    Every image is now included in the mapping — even when it wasn't split
+    into multiple parts — because `split_grid_image` always writes a fresh,
+    border-tight-cropped file. This makes sure a single (unsplit) image that
+    had blank margin or bled-in page text trimmed off it actually gets its
+    markdown reference updated to the cleaned-up file instead of silently
+    keeping the old, untrimmed one.
+
+    Skips images that look like they were already processed (contain
+    `_partN` / `_trimmed`) so re-runs over a shared folder don't
+    double-process."""
     if not images_dir.exists():
         return {}
 
@@ -647,8 +737,7 @@ def process_images_dir(images_dir: Path) -> dict[str, list[tuple[Path, str]]]:
         if _is_already_split(img_file):
             continue
         splits = split_grid_image(img_file)
-        if len(splits) > 1:
-            mapping[img_file.name] = splits
+        mapping[img_file.name] = splits
 
     return mapping
 
@@ -672,10 +761,14 @@ def _text_as_markdown_lines(extracted: str) -> list[str]:
     return out
 
 
-def _format_image_block(prefix: str, sp: Path, title: str, idx: int) -> list[str]:
-    """Returns the markdown lines for one split part.
+def _format_image_block(prefix: str, sp: Path, title: str, idx: int, is_single: bool = False) -> list[str]:
+    """Returns the markdown lines for one processed image (a split part, or
+    the single tight-cropped version of an unsplit image).
 
-    Every part is fully OCR'd first. Two outcomes:
+    `sp` has ALREADY been tight-cropped to its own content border (done in
+    `split_grid_image`), so any OCR text found on it is — by construction —
+    text that lives inside that border, never neighbouring page text. Two
+    outcomes:
 
     1. TEXT IMAGE (OCR text covers a large fraction of the image area, e.g.
        a photographed notebook page): the image is DROPPED entirely and only
@@ -687,7 +780,7 @@ def _format_image_block(prefix: str, sp: Path, title: str, idx: int) -> list[str
        is ever placed above or inside the image.
     """
     name = sp.name
-    label = title or f"Part {idx}"
+    label = title or (f"Part {idx}" if not is_single else name)
     extracted, coverage = ocr_image_full(sp)
 
     lines: list[str] = []
@@ -700,8 +793,9 @@ def _format_image_block(prefix: str, sp: Path, title: str, idx: int) -> list[str
         return lines
 
     # Diagram/chart: image FIRST, then its caption/name BELOW it, then any
-    # extra title/text found on/near it — nothing ever goes above or inside
-    # the image.
+    # extra title/text found INSIDE its own border — nothing ever goes above
+    # or inside the image, and nothing from outside the image's border is
+    # ever pulled in.
     lines.append(f"![{label}]({prefix}{name})")
     lines.append(f"**{name}**")
     if title:
@@ -714,15 +808,18 @@ def _format_image_block(prefix: str, sp: Path, title: str, idx: int) -> list[str
 
 
 def update_markdown_with_splits(md_path: Path, split_mapping: dict[str, list[tuple[Path, str]]]) -> None:
-    """For every image referenced in the markdown:
-    - If it was split into parts, replace the single line with one block per
-      part (each block = image line, THEN caption line, THEN extracted OCR
-      text).
-    - Otherwise, keep the image line as-is and add the caption (the image
-      filename) directly BELOW it, followed by the image's full OCR'd text.
-    This ensures each image has its filename visible as text right below it,
-    the image itself stays free of in-image text artefacts, and the actual
-    handwritten/printed content is captured as real markdown text.
+    """For every image referenced in the markdown, replace the single line
+    with the block(s) produced from its border-tight-cropped, processed
+    version(s):
+    - If it was split into multiple parts, one block per part.
+    - If it wasn't split, still swap in its single tight-cropped version
+      (never the original, possibly untrimmed file) with its caption below.
+    Any image filename NOT present in split_mapping (e.g. one that failed to
+    process) falls back to the original OCR-on-original-file behaviour so
+    nothing is silently dropped.
+    This ensures each saved image is cropped to its own true border, its
+    filename is visible as text right below it, and only text detected
+    inside that border is ever surfaced as the image's extracted text.
     """
     content = md_path.read_text(encoding="utf-8")
     new_lines: list[str] = []
@@ -737,17 +834,19 @@ def update_markdown_with_splits(md_path: Path, split_mapping: dict[str, list[tup
             image_filename = inside.rsplit("/", 1)[-1] if inside else ""
 
             if image_filename and image_filename in split_mapping:
-                # Split image: emit one block per part.
+                parts = split_mapping[image_filename]
                 prefix = ""
                 if "/" in inside:
                     prefix = inside.rsplit("/", 1)[0] + "/"
-                for i, (sp, title) in enumerate(split_mapping[image_filename], start=1):
-                    new_lines.extend(_format_image_block(prefix, sp, title, i))
+                is_single = len(parts) == 1
+                for i, (sp, title) in enumerate(parts, start=1):
+                    new_lines.extend(_format_image_block(prefix, sp, title, i, is_single=is_single))
                 replaced = True
             elif image_filename:
-                # Resolve the actual file on disk so we can OCR it. `inside`
-                # is the path as written in the markdown (relative to the
-                # markdown file's own directory).
+                # Fallback path (image wasn't found in split_mapping, e.g.
+                # processing failed): OCR the original file as before. This
+                # is the ONLY place where an un-cropped file may still be
+                # OCR'd, kept purely as a safety net.
                 img_on_disk = (md_path.parent / inside).resolve() if inside else None
                 extracted, coverage = ("", 0.0)
                 if img_on_disk and img_on_disk.exists():

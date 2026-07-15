@@ -445,16 +445,16 @@ FOR PATIENTS
 
 ## Acute Lymphoblastic Leukemia
 
-![Image](all_images/patients__image_000001_28dc6bfe4ee3709c25a47cd4bac5e6962c864a8183916412e969f8191530a19f.png)
-**patients__image_000001_28dc6bfe4ee3709c25a47cd4bac5e6962c864a8183916412e969f8191530a19f.png**
+![patients__image_000001_28dc6bfe4ee3709c25a47cd4bac5e6962c864a8183916412e969f8191530a19f_trimmed.png](all_images/patients__image_000001_28dc6bfe4ee3709c25a47cd4bac5e6962c864a8183916412e969f8191530a19f_trimmed.png)
+**patients__image_000001_28dc6bfe4ee3709c25a47cd4bac5e6962c864a8183916412e969f8191530a19f_trimmed.png**
 
 NATIONAL COMPREHENSIVE CANCER NETWORK  
 FOUNDATION  
 NCCN  
 Guiding Treatment. Changing Lives.  
 
-![Image](all_images/patients__image_000003_5bd58041bd251bec352b5c0ab11ff6071e5ba1fbe4818ce358f4cd1a7a6a4c0d.png)
-**patients__image_000003_5bd58041bd251bec352b5c0ab11ff6071e5ba1fbe4818ce358f4cd1a7a6a4c0d.png**
+![patients__image_000003_5bd58041bd251bec352b5c0ab11ff6071e5ba1fbe4818ce358f4cd1a7a6a4c0d_trimmed.png](all_images/patients__image_000003_5bd58041bd251bec352b5c0ab11ff6071e5ba1fbe4818ce358f4cd1a7a6a4c0d_trimmed.png)
+**patients__image_000003_5bd58041bd251bec352b5c0ab11ff6071e5ba1fbe4818ce358f4cd1a7a6a4c0d_trimmed.png**
 
 Ü
 
@@ -468,8 +468,8 @@ Cancer Network
 
 Did you know that top cancer centers across the United States work together to improve cancer care? This alliance of leading cancer centers is called the National Comprehensive Cancer Network ®  (NCCN ® ).
 
-![Image](all_images/patients__image_000005_9c64e7f2be3a16e215e4244d23fb2bf5efc3ad116407e5dbc0337ef860c3e335.png)
-**patients__image_000005_9c64e7f2be3a16e215e4244d23fb2bf5efc3ad116407e5dbc0337ef860c3e335.png**
+![patients__image_000005_9c64e7f2be3a16e215e4244d23fb2bf5efc3ad116407e5dbc0337ef860c3e335_trimmed.png](all_images/patients__image_000005_9c64e7f2be3a16e215e4244d23fb2bf5efc3ad116407e5dbc0337ef860c3e335_trimmed.png)
+**patients__image_000005_9c64e7f2be3a16e215e4244d23fb2bf5efc3ad116407e5dbc0337ef860c3e335_trimmed.png**
 
 Cancer care is always changing. NCCN develops evidence-based cancer care recommendations used by health care providers worldwide. These frequently updated recommendations are the NCCN Clinical Practice Guidelines in Oncology (NCCN Guidelines ® ). The NCCN Guidelines for Patients plainly explain these expert recommendations for people with cancer and caregivers.
 
@@ -483,13 +483,12 @@ NCCN.org/patientguidelines
 
 Connect with us Find an NCCN Cancer Center near you NCCN.org/cancercenters in
 
-![Image](all_images/patients__image_000006_b3a417ad771ddd50b4d80594b080fd3c3e4fe1d265e0ab169681c3c9433af18f.png)
-**patients__image_000006_b3a417ad771ddd50b4d80594b080fd3c3e4fe1d265e0ab169681c3c9433af18f.png**
+![patients__image_000006_b3a417ad771ddd50b4d80594b080fd3c3e4fe1d265e0ab169681c3c9433af18f_trimmed.png](all_images/patients__image_000006_b3a417ad771ddd50b4d80594b080fd3c3e4fe1d265e0ab169681c3c9433af18f_trimmed.png)
+**patients__image_000006_b3a417ad771ddd50b4d80594b080fd3c3e4fe1d265e0ab169681c3c9433af18f_trimmed.png**
 
 X  
 
-![Image](all_images/patients__image_000008_52abb268f2ad128ee2b804e0701b70648043722df8737a2d543cfbcdc9c857a9.png)
-**patients__image_000008_52abb268f2ad128ee2b804e0701b70648043722df8737a2d543cfbcdc9c857a9.png**
+0  
 
 YouTube  
 
@@ -827,10 +826,7 @@ Fertility preservation is all about keeping your options open, whether you know 
 
 More information on fertility preservation can be found at NCCN Guidelines for Patients: Adolescent and Young Adult Cancer at NCCN. org/patientguidelines and on the NCCN Patient Guides for Cancer app.
 
-NCCN Guidelines for Patients*  
-Adolescent and  
-Young Adult  
-Cancer  
+ishi  
 
 ## Changes in fertility
 
@@ -880,8 +876,10 @@ Flow cytometry may be used on cells from circulating (peripheral) blood or from 
 
 Immunophenotyping uses antibodies to detect the presence or absence of white blood cell antigens called biomarkers. These antigens are proteins that can be found on the surface of or inside white blood cells. Certain biomarkers are targeted in ALL treatment.
 
-![Image](all_images/patients__image_000016_66c073e304cef6e907319c1b5be5437290a0bf6c009b97d776a35afce2813295.png)
-**patients__image_000016_66c073e304cef6e907319c1b5be5437290a0bf6c009b97d776a35afce2813295.png**
+![patients__image_000016_66c073e304cef6e907319c1b5be5437290a0bf6c009b97d776a35afce2813295_trimmed.png](all_images/patients__image_000016_66c073e304cef6e907319c1b5be5437290a0bf6c009b97d776a35afce2813295_trimmed.png)
+**patients__image_000016_66c073e304cef6e907319c1b5be5437290a0bf6c009b97d776a35afce2813295_trimmed.png**
+
+D  
 
 ## Immunohistochemistry
 
@@ -1239,8 +1237,7 @@ After induction, there are multiple phases of intensive chemotherapy. These post
 
 Maintenance chemotherapy is the final and longest stage of treatment for ALL. Treatment is less intensive than prior chemotherapy. It usually lasts at least 2 years and is given at an outpatient center. The goal is to lower the risk of relapse.
 
-![Image](all_images/patients__image_000020_2fd0e79e5351a25768a14ae7c539831e63e24b6e788040da52501eb144d603de.png)
-**patients__image_000020_2fd0e79e5351a25768a14ae7c539831e63e24b6e788040da52501eb144d603de.png**
+良  
 
 ## Warnings about supplements and drug interactions
 
@@ -1389,10 +1386,8 @@ Tisagenlecleucel (Kymriah) and brexucabtagene autoleucel (Tecartus) are a type o
 
 For more information on side effects, see NCCN Guidelines for Patients: Immunotherapy Side Effects: CAR T-Cell Therapy at NCCN. org/patientguidelines and on the NCCN Patient Guides for Cancer app.
 
-NCCN Guidelines for Patients*  
-Immunotherapy  
-Side Effects  
-CAR T-Cell Therapy  
+![patients__image_000021_792c02f7d80c27b045f43b2a2610f4975d1e19f5035c8336e23841b7c0ed164d_trimmed.png](all_images/patients__image_000021_792c02f7d80c27b045f43b2a2610f4975d1e19f5035c8336e23841b7c0ed164d_trimmed.png)
+**patients__image_000021_792c02f7d80c27b045f43b2a2610f4975d1e19f5035c8336e23841b7c0ed164d_trimmed.png**
 
 ## Radiation therapy
 
@@ -1415,8 +1410,8 @@ Since ALL can sometimes be found in the testicles, radiation therapy might be gi
 
 Standard of care is the bestknown way to treat particular disease based on past clinical trials. There may be more than one treatment regimen that is considered standard of care. Ask your care team what treatment options are available and if a clinical trial might be right for you.
 
-![Image](all_images/patients__image_000022_de2defb6e2d666cd1aec5862c28d52b0cc502cbdca474341871e437dc1502880.png)
-**patients__image_000022_de2defb6e2d666cd1aec5862c28d52b0cc502cbdca474341871e437dc1502880.png**
+![patients__image_000022_de2defb6e2d666cd1aec5862c28d52b0cc502cbdca474341871e437dc1502880_trimmed.png](all_images/patients__image_000022_de2defb6e2d666cd1aec5862c28d52b0cc502cbdca474341871e437dc1502880_trimmed.png)
+**patients__image_000022_de2defb6e2d666cd1aec5862c28d52b0cc502cbdca474341871e437dc1502880_trimmed.png**
 
 ## Hematopoietic cell transplant
 
@@ -1441,9 +1436,8 @@ Every treatment has side effects. You will be monitored for infections, disease 
 
 More information on GVHD can be found in the NCCN Guidelines for Patients: Graft-Versus-Host Disease at NCCN.org/patientguidelines and on the NCCN Patient Guides for Cancer app.
 
-NCCN Guidelines for Patients*  
-Graft-Versus-  
-Host Disease  
+![patients__image_000023_f2ab5f08864d54559067eefa1de5c8f7d6a9b45d26d259c851c746a306a317aa_trimmed.png](all_images/patients__image_000023_f2ab5f08864d54559067eefa1de5c8f7d6a9b45d26d259c851c746a306a317aa_trimmed.png)
+**patients__image_000023_f2ab5f08864d54559067eefa1de5c8f7d6a9b45d26d259c851c746a306a317aa_trimmed.png**
 
 ## Key points
 
@@ -1463,8 +1457,8 @@ Host Disease
 -  Are there resources to help pay for tests, treatment, or other care I may need?
 -  What clinical trial options are available?
 
-![Image](all_images/patients__image_000024_87b570f3ac407c2d13ca683e0ec9e88b3f9f879eb5ecda9e7bca30d230b1198f.png)
-**patients__image_000024_87b570f3ac407c2d13ca683e0ec9e88b3f9f879eb5ecda9e7bca30d230b1198f.png**
+![patients__image_000024_87b570f3ac407c2d13ca683e0ec9e88b3f9f879eb5ecda9e7bca30d230b1198f_trimmed.png](all_images/patients__image_000024_87b570f3ac407c2d13ca683e0ec9e88b3f9f879eb5ecda9e7bca30d230b1198f_trimmed.png)
+**patients__image_000024_87b570f3ac407c2d13ca683e0ec9e88b3f9f879eb5ecda9e7bca30d230b1198f_trimmed.png**
 
 ## Let us know what you think!
 
@@ -1561,8 +1555,8 @@ Some cancer treatments can cause low blood cell counts.
 -  Neutropenia is a decrease in neutrophils, the most common type of white blood cell. This puts you at risk for infection.
 -  Thrombocytopenia is a condition where there are not enough platelets found in the blood. This puts you at risk for bleeding.
 
-![Image](all_images/patients__image_000025_26eb2c4a6ea595e51f7a2b11ed971c1de80d487834dd98c7e04bf53f6c06f368.png)
-**patients__image_000025_26eb2c4a6ea595e51f7a2b11ed971c1de80d487834dd98c7e04bf53f6c06f368.png**
+![patients__image_000025_26eb2c4a6ea595e51f7a2b11ed971c1de80d487834dd98c7e04bf53f6c06f368_trimmed.png](all_images/patients__image_000025_26eb2c4a6ea595e51f7a2b11ed971c1de80d487834dd98c7e04bf53f6c06f368_trimmed.png)
+**patients__image_000025_26eb2c4a6ea595e51f7a2b11ed971c1de80d487834dd98c7e04bf53f6c06f368_trimmed.png**
 
 ## Nausea and vomiting
 
@@ -1616,8 +1610,8 @@ For infection, antibiotics (for bacterial infection), antifungal medicine (for f
 
 Leukemia cells and chemotherapy sometimes cause damage to the kidneys. If the damage is severe, you may need dialysis. Dialysis is the process of filtering blood when the kidneys are unable. There are different types of dialysis. Hemodialysis and hemofiltration remove waste and water by circulating blood outside the body through an external filter.
 
-![Image](all_images/patients__image_000026_30de8c0d8d72ecb81a7f75f2f4d05f15e652099fde7f45681ecf96ac13d48cb9.png)
-**patients__image_000026_30de8c0d8d72ecb81a7f75f2f4d05f15e652099fde7f45681ecf96ac13d48cb9.png**
+![patients__image_000026_30de8c0d8d72ecb81a7f75f2f4d05f15e652099fde7f45681ecf96ac13d48cb9_trimmed.png](all_images/patients__image_000026_30de8c0d8d72ecb81a7f75f2f4d05f15e652099fde7f45681ecf96ac13d48cb9_trimmed.png)
+**patients__image_000026_30de8c0d8d72ecb81a7f75f2f4d05f15e652099fde7f45681ecf96ac13d48cb9_trimmed.png**
 
 ## Transfusions
 
@@ -1668,7 +1662,7 @@ More information on supportive care is available at NCCN.org/patientguidelines a
 
 app.
 
-NCCN Guidelines for Patients*  
+NCCN Guidelines for Patients  
 Survivorship Care  
 for Cancer-Related  
 Late and Long-  
@@ -1682,22 +1676,15 @@ Term Effects
 -  What should I do on weekends and other non-office hours?
 -  Will my care team be able to communicate with the emergency department or urgent care team?
 
-NCCN Guidelines for Patients®  
-Anemia and  
-Neutropenia  
-Low Blood Cell Counts  
+![patients__image_000028_f99ab5f374ba88989bfe4fcae426ab7ca435c92fb8d2beec2af8927ddcfedb5e_trimmed.png](all_images/patients__image_000028_f99ab5f374ba88989bfe4fcae426ab7ca435c92fb8d2beec2af8927ddcfedb5e_trimmed.png)
+**patients__image_000028_f99ab5f374ba88989bfe4fcae426ab7ca435c92fb8d2beec2af8927ddcfedb5e_trimmed.png**
 
-NCCN Guidelines for Patients  
-Distress During  
-Cancer Care  
+![patients__image_000029_8b0c361eeca6980387886ddb3f4e49a9f5cf59cd681043456fcbe7e437fae3f3_trimmed.png](all_images/patients__image_000029_8b0c361eeca6980387886ddb3f4e49a9f5cf59cd681043456fcbe7e437fae3f3_trimmed.png)
+**patients__image_000029_8b0c361eeca6980387886ddb3f4e49a9f5cf59cd681043456fcbe7e437fae3f3_trimmed.png**
 
-NCCN Guidelines for Patients  
-Nausea  
-and  
-Vomiting  
+![patients__image_000030_2821fe6115336c795d6ab9ebd39c28666ab206450b668cc94053b313b4a128ee_trimmed.png](all_images/patients__image_000030_2821fe6115336c795d6ab9ebd39c28666ab206450b668cc94053b313b4a128ee_trimmed.png)
+**patients__image_000030_2821fe6115336c795d6ab9ebd39c28666ab206450b668cc94053b313b4a128ee_trimmed.png**
 
-NCCN Guidelines for Patients*  
-Palliative Care  
 NCCN Guidelines for Patients  
 Fatigue  
 andCancer  
@@ -1873,8 +1860,8 @@ Treatment options for Ph- B-ALL in adults and AYAs include:
 -  Clinical trial
 -  Blinatumomab
 
-![Image](all_images/patients__image_000032_7b083c9edb4724ead13b3b9ce4a5c220ae0dfd7dfece4bfc3eb679afc8d43fbf.png)
-**patients__image_000032_7b083c9edb4724ead13b3b9ce4a5c220ae0dfd7dfece4bfc3eb679afc8d43fbf.png**
+![patients__image_000032_7b083c9edb4724ead13b3b9ce4a5c220ae0dfd7dfece4bfc3eb679afc8d43fbf_trimmed.png](all_images/patients__image_000032_7b083c9edb4724ead13b3b9ce4a5c220ae0dfd7dfece4bfc3eb679afc8d43fbf_trimmed.png)
+**patients__image_000032_7b083c9edb4724ead13b3b9ce4a5c220ae0dfd7dfece4bfc3eb679afc8d43fbf_trimmed.png**
 
 -  Inotuzumab ozogamicin
 -  Brexucabtagene autoleucel
@@ -2015,8 +2002,8 @@ Your health care center can help you with next steps. They often have on-site re
 
 In addition to help from your providers, the resources listed in the next section provide support for many people like yourself. Look through the list and visit the provided websites to learn more about these organizations.
 
-![Image](all_images/patients__image_000033_1f65ee6a82dbeb110d57a73a279f16f04770458d05a4c3c285cbd025992820e7.png)
-**patients__image_000033_1f65ee6a82dbeb110d57a73a279f16f04770458d05a4c3c285cbd025992820e7.png**
+![patients__image_000033_1f65ee6a82dbeb110d57a73a279f16f04770458d05a4c3c285cbd025992820e7_trimmed.png](all_images/patients__image_000033_1f65ee6a82dbeb110d57a73a279f16f04770458d05a4c3c285cbd025992820e7_trimmed.png)
+**patients__image_000033_1f65ee6a82dbeb110d57a73a279f16f04770458d05a4c3c285cbd025992820e7_trimmed.png**
 
 ## Finding a clinical trial
 
@@ -2100,8 +2087,8 @@ triagecancer.org
 -  How can I connect with others and build a support system?
 -  Who can I talk to if I don't feel safe at home, at work, or in my neighborhood?
 
-![Image](all_images/patients__image_000034_f9518d03278769cc0ea20421173ef607bc48875f2ed7d192ffe04c6cd1bc9f34.png)
-**patients__image_000034_f9518d03278769cc0ea20421173ef607bc48875f2ed7d192ffe04c6cd1bc9f34.png**
+![patients__image_000034_f9518d03278769cc0ea20421173ef607bc48875f2ed7d192ffe04c6cd1bc9f34_trimmed.png](all_images/patients__image_000034_f9518d03278769cc0ea20421173ef607bc48875f2ed7d192ffe04c6cd1bc9f34_trimmed.png)
+**patients__image_000034_f9518d03278769cc0ea20421173ef607bc48875f2ed7d192ffe04c6cd1bc9f34_trimmed.png**
 
 Ü
 
@@ -2753,8 +2740,8 @@ types of response 30
 
 tyrosine kinase inhibitor (TKI) 35
 
-![Image](all_images/patients__image_000036_08aee2df423f266cf3a676f3e249f5de14df00ede7448d4cc5bc94ae306ebe7c.png)
-**patients__image_000036_08aee2df423f266cf3a676f3e249f5de14df00ede7448d4cc5bc94ae306ebe7c.png**
+![patients__image_000036_08aee2df423f266cf3a676f3e249f5de14df00ede7448d4cc5bc94ae306ebe7c_trimmed.png](all_images/patients__image_000036_08aee2df423f266cf3a676f3e249f5de14df00ede7448d4cc5bc94ae306ebe7c_trimmed.png)
+**patients__image_000036_08aee2df423f266cf3a676f3e249f5de14df00ede7448d4cc5bc94ae306ebe7c_trimmed.png**
 
 Ü
 
